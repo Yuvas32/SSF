@@ -1,0 +1,48 @@
+/* src/components/TableView.css */
+
+.tvRoot {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tvTitle {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.tvEmpty {
+  font-size: 13px;
+  opacity: 0.8;
+}
+
+/* This is the IMPORTANT part: the table scrolls instead of the page overflowing */
+.tvScroller {
+  overflow: auto;              /* both vertical + horizontal scroll */
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+}
+
+/* Make wide tables not explode the layout */
+.tvTable {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: max-content;      /* enables horizontal scroll nicely */
+}
+
+.tvTable th,
+.tvTable td {
+  padding: 8px 10px;
+  font-size: 12px;
+  white-space: nowrap;         /* prevents wrapping that causes weird heights */
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.tvTable thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  backdrop-filter: blur(6px);
+  background: rgba(0, 0, 0, 0.25); /* works in dark-ish; fine in light too */
+}
+
