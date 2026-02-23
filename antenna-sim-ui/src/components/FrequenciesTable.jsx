@@ -43,7 +43,7 @@ export default function FrequenciesTable({ onDisplay }) {
     <div className="panel">
       <div className="panelHeader">
         <div>
-          <div className="panelTitle">Frequencies (DB)</div>
+          <div className="panelTitle">Scan Table (DB)</div>
           <div className="panelMeta">
             {rows.length} rows {loading ? "• Loading…" : ""}
           </div>
@@ -133,7 +133,7 @@ function Row({ row, onDeleted, onDisplay }) {
       <td>{formatDt(row.updatedAt)}</td>
       <td style={{ display: "flex", gap: 8, alignItems: "center" }}>
         <button className="btnSmall" onClick={onDisplay}>
-          Display
+          Load
         </button>
 
         <button className="btnDangerSmall" onClick={() => deleteRow(row.id)}>

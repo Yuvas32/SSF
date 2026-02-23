@@ -163,10 +163,10 @@ export default function App() {
                 Spectrum
               </TabButton>
               <TabButton id="frequencies" activeTab={activeTab} setActiveTab={setActiveTab}>
-                Frequencies
+                Scan Table
               </TabButton>
               <TabButton id="table" activeTab={activeTab} setActiveTab={setActiveTab}>
-                Scan Table
+                Scan Result
               </TabButton>
               <TabButton id="xml" activeTab={activeTab} setActiveTab={setActiveTab}>
                 Controller XML
