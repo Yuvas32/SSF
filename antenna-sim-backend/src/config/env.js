@@ -8,15 +8,12 @@ dotenv.config();
 export const port = Number(process.env.PORT || 8080);
 
 // Your current main output dir (kept)
-export const OUT_DIR =
-  process.env.SCAN_OUT_DIR || "C:\\Satscan\\antenna_sim_scans";
+export const OUT_DIR ="C:\\Satscan\\antenna_sim_scans";
 
 // NEW: satscandata dirs
-export const SATSCAN_INPUT_DIR =
-  process.env.SATSCAN_INPUT_DIR || "C:\\Satscan\\satscandata\\input";
+export const SATSCAN_INPUT_DIR ="C:\\Satscan\\satscandata\\input";
 
-export const SATSCAN_OUTPUT_DIR =
-  process.env.SATSCAN_OUTPUT_DIR || "C:\\Satscan\\satscandata\\output";
+export const SATSCAN_OUTPUT_DIR ="C:\\Satscan\\satscandata\\output";
 
 function getDownloadsDir() {
   // Windows-friendly: USERPROFILE\Downloads
@@ -37,7 +34,7 @@ export const OUT_DIRS = (() => {
       .filter(Boolean);
   }
 
-  return [getDownloadsDir(), SATSCAN_INPUT_DIR, SATSCAN_OUTPUT_DIR];
+  return [getDownloadsDir(), SATSCAN_INPUT_DIR, OUT_DIR];
 })();
 
 // NEW: satscan api-call exe name (process name)

@@ -10,46 +10,30 @@ import TableView from "./components/TableView";
 
 import useCooldown from "./hooks/useCooldown";
 import usePcHealth from "./hooks/usePcHealth";
-import { createFrequency } from "./services/backendApi";
+import { createFrequency, saveScanXmlAfterCreate } from "./services/backendApi";
 
 const COOLDOWN_MS = 3000;
-
 const LS_ACTIVE_TAB = "activeTab"; // remember tab after refresh
 
 export default function App() {
   const [scan, setScan] = useState(null);
   const [isScanning, setIsScanning] = useState(false);
 
-  // Scan_XX.tmptxt contents (loaded when user clicks Display)
   const [tableText, setTableText] = useState("");
-
-  // controls SpectrumView behavior:
-  // "scan" = normal flow (can wait 60s if input=0)
-  // "display" = user clicked Display (skip wait-60; just poll output)
   const [spectrumMode, setSpectrumMode] = useState("scan");
 
-  // NAV tabs
   const [activeTab, setActiveTab] = useState(
     () => localStorage.getItem(LS_ACTIVE_TAB) || "spectrum"
   );
   useEffect(() => localStorage.setItem(LS_ACTIVE_TAB, activeTab), [activeTab]);
 
-  // theme
   const [theme, setTheme] = useState(() => localStorage.getItem("theme") || "light");
   useEffect(() => localStorage.setItem("theme", theme), [theme]);
 
-  // backend device health
   const pcHealth = usePcHealth(3000);
-
-  // cooldown helper
   const { cooldownLeftMs, isCooldownActive, startCooldown } = useCooldown(COOLDOWN_MS);
 
-  // XmlTableViewer exposed API
-  const [xmlApi, setXmlApi] = useState({
-    saveAfterNextApply: null,
-  });
-
-  // Optional: show auto-save result
+  const [xmlApi, setXmlApi] = useState({ saveAfterNextApply: null });
   const [autoSaveMsg, setAutoSaveMsg] = useState("");
 
   const canScan = useMemo(() => {
@@ -69,6 +53,23 @@ export default function App() {
       // 1) create DB row
       const saved = await createFrequency({ start, end: stop });
 
+      // 2) ✅ immediately save Scan_<id>.xml based on public/controller.xml template
+      const xmlResult = await saveScanXmlAfterCreate({
+        scanId: saved.id,
+        start: saved.start,
+        stop: saved.end,
+      });
+
+      const failed = xmlResult?.failed || [];
+      if (failed.length) {
+        setAutoSaveMsg(
+          `⚠️ XML saved partially. Saved to: ${(xmlResult.savedTo || []).join(" , ")}. Failed: ` +
+            failed.map((f) => `${f.dir}: ${f.error}`).join(" | ")
+        );
+      } else {
+        setAutoSaveMsg(`✅ XML saved to: ${(xmlResult.savedTo || []).join(" , ")}`);
+      }
+
       const nextScan = {
         dbId: saved.id,
         start: saved.start,
@@ -76,19 +77,9 @@ export default function App() {
         ts: new Date(saved.createdAt).toLocaleString(),
       };
 
-      // show spectrum for the scan
       setSpectrumMode("scan");
       setScan(nextScan);
       setActiveTab("spectrum");
-
-      // NOTE:
-      // XmlTableViewer is mounted only when XML tab is active,
-      // so autosave can happen only if user is on XML tab.
-      if (activeTab === "xml") {
-        xmlApi.saveAfterNextApply?.();
-      } else {
-        setAutoSaveMsg("ℹ️ Scan saved to DB. Open the XML tab and click Apply to save XML to folders.");
-      }
     } catch (e) {
       console.error(e);
       setScan({
@@ -99,6 +90,7 @@ export default function App() {
         error: e?.message || "Failed to save scan",
       });
       setActiveTab("spectrum");
+      setAutoSaveMsg(`❌ ${e?.message || "Scan failed"}`);
     } finally {
       setIsScanning(false);
     }
@@ -114,10 +106,8 @@ export default function App() {
       ts: new Date(row.createdAt).toLocaleString(),
     });
 
-    // UX: show spectrum tab immediately
     setActiveTab("spectrum");
 
-    // load tmptxt into Scan Table tab content
     try {
       const res = await fetch(`http://localhost:8080/satscan/output/${row.id}/tmptxt`, {
         cache: "no-store",
@@ -167,7 +157,6 @@ export default function App() {
             </div>
           )}
 
-          {/* NAVBAR */}
           <div className="panel" style={{ padding: 10 }}>
             <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
               <TabButton id="spectrum" activeTab={activeTab} setActiveTab={setActiveTab}>
@@ -195,7 +184,6 @@ export default function App() {
             </div>
           </div>
 
-          {/* ONLY ONE VIEW AT A TIME */}
           {activeTab === "spectrum" && (
             <SpectrumView
               startFreq={scan?.start ?? "-"}
@@ -244,7 +232,7 @@ export default function App() {
 
               <div className="panelBody">
                 <div style={{ fontSize: 12, opacity: 0.8, marginBottom: 10 }}>
-                  Tip: After you Scan, come here and click <b>Apply</b> to save XML to the 3 folders.
+                  Optional: Use this tab to manually edit controller.xml and click <b>Apply</b>.
                 </div>
 
                 <XmlTableViewer
@@ -252,15 +240,14 @@ export default function App() {
                   onExpose={setXmlApi}
                   onAutoSaveResult={(result) => {
                     if (!result) return;
-                    if (result.ok) {
-                      setAutoSaveMsg(`✅ XML saved to: ${result.savedTo.join(" , ")}`);
-                    } else {
-                      const failed = (result.failed || [])
-                        .map((f) => `${f.dir}: ${f.error}`)
-                        .join(" | ");
+                    const failed = result.failed || [];
+                    if (failed.length) {
                       setAutoSaveMsg(
-                        `⚠️ XML saved partially. Saved to: ${result.savedTo.join(" , ")}. Failed: ${failed}`
+                        `⚠️ XML saved partially. Saved to: ${result.savedTo.join(" , ")}. Failed: ` +
+                          failed.map((f) => `${f.dir}: ${f.error}`).join(" | ")
                       );
+                    } else {
+                      setAutoSaveMsg(`✅ XML saved to: ${result.savedTo.join(" , ")}`);
                     }
                   }}
                   showManualSave={false}
