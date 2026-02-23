@@ -1,9 +1,16 @@
 * { box-sizing: border-box; }
-html, body, #root { height: 100%; margin: 0; font-family: system-ui, Arial; }
 
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  font-family: system-ui, Arial;
+}
+
+/* App is a full-height flex column.
+   IMPORTANT: scrolling is done in .container (overview scroll). */
 body {
   margin: 0;
-  overflow-y: auto; /* ✅ allow page to scroll if needed */
+  overflow: hidden; /* ✅ prevent double scrollbars; use .container instead */
 }
 
 :root{
@@ -72,18 +79,23 @@ body {
   color: var(--muted);
 }
 
+/* ✅ OVERVIEW SCROLL:
+   This is the "page scroll" area for the whole app content under the topbar */
 .container{
   flex: 1;
   min-height: 0;
   padding: 14px;
   display: flex;
   width: 100%;
+
+  overflow: auto;                 /* ✅ overview scroll here */
+  -webkit-overflow-scrolling: touch;
 }
 
 .stack{
   width: 100%;
-  max-width: none;   /* ✅ remove the 1200px limit */
-  margin: 0;         /* ✅ remove centering */
+  max-width: none;
+  margin: 0;
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -170,7 +182,7 @@ body {
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  min-height: 0;
+  min-height: 84px;
 }
 
 .panelHeader{
@@ -222,9 +234,17 @@ body {
   border-color: rgba(255,255,255,0.14);
 }
 
-/* Make the table section take more space and scroll nicely */
+/* ✅ Make last panel (Scan Table) stretch and allow internal scroll area */
 .panel:last-child{
-  flex: 1;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.panel:last-child .panelBody{
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .btnSmall{
@@ -239,11 +259,18 @@ body {
   font-size: 12px;
 }
 
+/* ✅ Big table area at 100% zoom (no 340px cap) */
 .tableWrap{
-  max-height: 340px;
+  flex: 1 1 auto;
+  min-height: 0;
+  height: calc(100vh - 280px);  /* adjust 260–340 if needed */
+  max-height: none;
   overflow: auto;
+  scrollbar-gutter: stable both-edges;
+  -webkit-overflow-scrolling: touch;
 }
 
+/* dbTable (other tables) */
 .dbTable{
   width: 100%;
   border-collapse: collapse;
@@ -296,10 +323,7 @@ body {
   color: var(--muted);
 }
 
-/* ===========================================
-   Tabs (btnTab) – improved + DARK MODE
-   =========================================== */
-
+/* Tabs */
 .btnTab {
   padding: 8px 12px;
   border-radius: 10px;
@@ -312,13 +336,8 @@ body {
   transition: background 0.15s ease, border-color 0.15s ease, transform 0.05s ease;
 }
 
-.btnTab:hover {
-  background: rgba(0,0,0,0.06);
-}
-
-.btnTab:active {
-  transform: translateY(1px);
-}
+.btnTab:hover { background: rgba(0,0,0,0.06); }
+.btnTab:active { transform: translateY(1px); }
 
 .btnTabActive {
   padding: 8px 12px;
@@ -337,9 +356,7 @@ body {
   color: rgba(255,255,255,0.92);
 }
 
-.app.dark .btnTab:hover {
-  background: rgba(255,255,255,0.10);
-}
+.app.dark .btnTab:hover { background: rgba(255,255,255,0.10); }
 
 .app.dark .btnTabActive {
   border-color: rgba(96,165,250,0.65);
@@ -347,10 +364,7 @@ body {
   color: rgba(147,197,253,1);
 }
 
-/* ===========================================
-   TableView styles (simple table only)
-   =========================================== */
-
+/* TableView (Scan Table) */
 .tableViewWrap{
   border: 1px solid var(--border);
   border-radius: 12px;
@@ -362,14 +376,16 @@ body {
 }
 
 .tableViewTable{
-  width: 100%;
+  width: max-content;     /* ✅ allows horizontal scroll for many columns */
+  min-width: 100%;
   border-collapse: collapse;
   font-size: 12px;
 }
 
 .tableViewTable th,
 .tableViewTable td{
-  padding: 8px 10px;
+  padding: 6px 8px;       /* ✅ more rows visible at 100% */
+  line-height: 1.2;
   border-bottom: 1px solid rgba(0,0,0,0.08);
   border-right: 1px solid rgba(0,0,0,0.06);
   white-space: nowrap;
@@ -384,10 +400,14 @@ body {
 .tableViewTable th{
   position: sticky;
   top: 0;
-  z-index: 2;
+  z-index: 3;
   background: rgba(0,0,0,0.04);
   text-align: left;
   font-weight: 900;
+}
+
+.tableViewTable tr:hover td{
+  background: rgba(0,0,0,0.03);
 }
 
 .app.dark .tableViewTable th{
@@ -399,10 +419,6 @@ body {
   border-bottom-color: rgba(255,255,255,0.12);
   border-right-color: rgba(255,255,255,0.08);
   color: rgba(255,255,255,0.88);
-}
-
-.tableViewTable tr:hover td{
-  background: rgba(0,0,0,0.03);
 }
 
 .app.dark .tableViewTable tr:hover td{

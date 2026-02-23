@@ -4,6 +4,7 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
+  min-height: 0; /* ✅ important in flex layouts */
 }
 
 .tvTitle {
@@ -16,33 +17,60 @@
   opacity: 0.8;
 }
 
-/* This is the IMPORTANT part: the table scrolls instead of the page overflowing */
+/* ✅ Make the table a big viewport-based area at 100% zoom */
 .tvScroller {
-  overflow: auto;              /* both vertical + horizontal scroll */
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  flex: 1 1 auto;
+  min-height: 0;                    /* ✅ allow internal scrolling */
+  max-height: calc(100vh - 280px);  /* ✅ shows many rows; tweak 240–340 */
+  overflow: auto;                   /* both vertical + horizontal scroll */
+  border: 1px solid rgba(0, 0, 0, 0.12);
   border-radius: 10px;
+  scrollbar-gutter: stable both-edges;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* Make wide tables not explode the layout */
 .tvTable {
-  width: 100%;
   border-collapse: collapse;
-  min-width: max-content;      /* enables horizontal scroll nicely */
+  width: max-content;   /* ✅ enables horizontal scroll */
+  min-width: 100%;      /* ✅ still fills container */
 }
 
 .tvTable th,
 .tvTable td {
-  padding: 8px 10px;
+  padding: 6px 8px;     /* ✅ more rows visible at 100% */
   font-size: 12px;
-  white-space: nowrap;         /* prevents wrapping that causes weird heights */
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  line-height: 1.2;
+  white-space: nowrap;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  border-right: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.tvTable th:last-child,
+.tvTable td:last-child {
+  border-right: none;
 }
 
 .tvTable thead th {
   position: sticky;
   top: 0;
-  z-index: 1;
+  z-index: 2;
   backdrop-filter: blur(6px);
-  background: rgba(0, 0, 0, 0.25); /* works in dark-ish; fine in light too */
+  background: rgba(255, 255, 255, 0.85); /* ✅ good for light mode */
+  text-align: left;
 }
 
+/* ✅ Dark mode support (if your app toggles a .dark class somewhere) */
+.app.dark .tvScroller {
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.app.dark .tvTable th,
+.app.dark .tvTable td {
+  border-bottom-color: rgba(255, 255, 255, 0.12);
+  border-right-color: rgba(255, 255, 255, 0.08);
+}
+
+.app.dark .tvTable thead th {
+  background: rgba(0, 0, 0, 0.35);
+}

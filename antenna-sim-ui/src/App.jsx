@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import "./App.css";
 
 import ScanControls from "./components/ScanControls";
-import SpectrumView from "./components/SpectrumView";
+import SpectrumView from "./components/SpectrumView/SpectrumView";
 import XmlTableViewer from "./components/XmlTableViewer/XmlTableViewer";
 import FrequenciesTable from "./components/FrequenciesTable";
 import TableView from "./components/TableView";

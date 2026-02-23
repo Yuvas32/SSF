@@ -1,6 +1,3 @@
-/* src/index.css */
-
-/* Reset / base */
 :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
@@ -12,20 +9,13 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Make the app truly full-screen */
-html,
-body,
-#root {
+/* keep it simple, App.css handles layout */
+html, body, #root {
   height: 100%;
   margin: 0;
   padding: 0;
 }
 
-/* IMPORTANT: remove Vite template centering */
 body {
-  min-width: 320px;
-  min-height: 100%;
   display: block;
-  background: transparent;
 }
-
