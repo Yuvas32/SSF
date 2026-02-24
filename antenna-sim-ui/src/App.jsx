@@ -13,7 +13,7 @@ import usePcHealth from "./hooks/usePcHealth";
 import { createFrequency, saveScanXmlAfterCreate } from "./services/backendApi";
 
 const COOLDOWN_MS = 3000;
-const LS_ACTIVE_TAB = "activeTab";
+const LS_ACTIVE_TAB = "activeTab"; // active tab consistency across reloads
 
 export default function App() {
   const [scan, setScan] = useState(null);
