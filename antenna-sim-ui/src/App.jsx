@@ -1,4 +1,3 @@
-// antenna-sim-ui/src/App.jsx
 import { useEffect, useMemo, useState } from "react";
 import "./App.css";
 
@@ -13,7 +12,7 @@ import usePcHealth from "./hooks/usePcHealth";
 import { createFrequency, saveScanXmlAfterCreate } from "./services/backendApi";
 
 const COOLDOWN_MS = 3000;
-const LS_ACTIVE_TAB = "activeTab"; // active tab consistency across reloads
+const LS_ACTIVE_TAB = "activeTab";
 
 export default function App() {
   const [scan, setScan] = useState(null);
@@ -50,10 +49,8 @@ export default function App() {
     await new Promise(requestAnimationFrame);
 
     try {
-      // 1) create DB row
       const saved = await createFrequency({ start, end: stop });
 
-      // 2) ✅ immediately save Scan_<id>.xml based on public/controller.xml template
       const xmlResult = await saveScanXmlAfterCreate({
         scanId: saved.id,
         start: saved.start,
@@ -214,7 +211,12 @@ export default function App() {
               </div>
 
               <div className="panelBody">
-                <TableView title="Parsed Table" text={tableText} maxHeight={520} />
+                <TableView
+                  title="Parsed Table"
+                  text={tableText}
+                  maxHeight={520}
+                  scanId={scan?.dbId ?? null}
+                />
               </div>
             </div>
           )}

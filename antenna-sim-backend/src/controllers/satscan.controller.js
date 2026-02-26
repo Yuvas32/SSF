@@ -4,6 +4,7 @@ import {
   getOutputStatusForScanId,
   readSpectrumAsJson,
   readTmpTxtAsText,
+  getResultXmlForScanId,
 } from "../services/satscan.service.js";
 
 export const inputCount = asyncHandler(async (req, res) => {
@@ -31,7 +32,6 @@ export const spectrumFile = asyncHandler(async (req, res) => {
   res.json(data);
 });
 
-// ✅ NEW: tmptxt reader
 export const tmptxtFile = asyncHandler(async (req, res) => {
   const scanId = Number(req.params.scanId);
   if (!Number.isFinite(scanId) || scanId <= 0) {
@@ -40,4 +40,14 @@ export const tmptxtFile = asyncHandler(async (req, res) => {
 
   const data = await readTmpTxtAsText(scanId);
   res.json(data);
+});
+
+export const resultXmlDownloadFile = asyncHandler(async (req, res) => {
+  const scanId = Number(req.params.scanId);
+  if (!Number.isFinite(scanId) || scanId <= 0) {
+    return res.status(400).json({ ok: false, error: "scanId must be a positive number" });
+  }
+
+  const file = await getResultXmlForScanId(scanId);
+  return res.download(file.source, file.fileName || "result.xml");
 });

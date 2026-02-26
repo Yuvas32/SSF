@@ -1,140 +1,69 @@
-import React, { useMemo } from "react";
+import React from "react";
 
-/**
- * rows: array of objects from your parsed Scan Result / TableView
- * filenamePrefix: string
- * meta: optional { networkName, rfBand, captureMode }
- */
-export default function ExportSatProbeButton({
-  rows = [],
-  filenamePrefix = "satprobe_carriers",
-  meta = { networkName: "Network", rfBand: "Ku Band", captureMode: "RL Based" },
-}) {
-  const canExport = Array.isArray(rows) && rows.length > 0;
+export default function ExportSatProbeButton({ scanId = null }) {
+  const canDownload = Number.isFinite(Number(scanId)) && Number(scanId) > 0;
 
-  const payload = useMemo(() => {
-    const carriers = (rows || []).map((r, idx) => toSatProbeCarrier(r, idx));
+  async function onDownload() {
+    if (!canDownload) return;
 
-    return {
-      ...meta,
-      exportedAt: new Date().toISOString(),
-      carriers,
-    };
-  }, [rows, meta]);
+    try {
+      const res = await fetch(
+        `http://localhost:8080/satscan/output/${scanId}/resultxml/download`,
+        {
+          method: "GET",
+          cache: "no-store",
+        }
+      );
 
-  function onExport() {
-    const name = `${filenamePrefix}_${new Date()
-      .toISOString()
-      .replace(/[:.]/g, "-")}.json`;
+      if (!res.ok) {
+        let msg = `HTTP ${res.status}`;
 
-    downloadJson(payload, name);
+        try {
+          const j = await res.json();
+          msg = j?.error || msg;
+        } catch {
+          try {
+            msg = await res.text();
+          } catch {
+            // ignore
+          }
+        }
+
+        throw new Error(msg || "Failed to download result.xml");
+      }
+
+      const blob = await res.blob();
+
+      let filename = "result.xml";
+      const cd = res.headers.get("content-disposition");
+      const match = cd && cd.match(/filename="?([^"]+)"?/i);
+      if (match?.[1]) {
+        filename = match[1];
+      }
+
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+
+      setTimeout(() => window.URL.revokeObjectURL(url), 5000);
+    } catch (err) {
+      alert(err?.message || "Failed to download result.xml");
+    }
   }
 
   return (
-    <button className="btnSmall" onClick={onExport} disabled={!canExport} title={!canExport ? "No rows to export" : ""}>
-      Export to SatProbe
+    <button
+      className="btn"
+      onClick={onDownload}
+      disabled={!canDownload}
+      title={!canDownload ? "No scan selected" : ""}
+      type="button"
+    >
+      Get satProbe info
     </button>
   );
-}
-
-/* ------------------- mapping logic ------------------- */
-
-/**
- * Map YOUR row -> SatProbe column-like structure.
- * Adjust the "pick(...)" keys to match your real parsed columns.
- */
-function toSatProbeCarrier(row, idx) {
-  // Helpers: read a value from many possible keys
-  const frequencyMHz = toNumber(
-    pick(row, ["Frequency (MHz)", "frequency_mhz", "frequency", "freq_mhz", "Freq (MHz)", "Freq"])
-  );
-
-  const symbolRateKsps = toNumber(
-    pick(row, ["Symbolrate (Ks/s)", "Symbolrate (ksps)", "symbolrate_ksps", "sr_ksps", "SymbolRate"])
-  );
-
-  const systemType = String(
-    pick(row, ["System Type", "system", "System", "Vendor & System"]) ?? ""
-  );
-
-  const modulation = String(pick(row, ["Modulation", "modulation"]) ?? "");
-  const codeRate = String(pick(row, ["Code Rate", "code_rate", "CodeRate"]) ?? "");
-
-  const frameFormat = String(
-    pick(row, ["Frame Format", "uw type", "UW Type", "frame_format"]) ?? ""
-  );
-
-  const blockSize = toNumber(pick(row, ["Block Size", "blocksize", "Blocksize"]) );
-  const fecType = String(pick(row, ["FEC Type", "fec", "FEC"]) ?? "");
-
-  const spectrumInversion = toBool(
-    pick(row, ["Spectrum Inversion", "inverted", "Inverted"]) // you already renamed inversion => inverted
-  );
-
-  const isEnabled = toBool(pick(row, ["Is Enabled", "enabled", "Enabled"]) ?? true);
-  const isSignaling = toBool(pick(row, ["Is signaling", "is_signaling", "signaling"]) ?? false);
-
-  const demodName = String(pick(row, ["Demodulator Name", "demod_name", "Demod"]) ?? "");
-
-  // Create a stable carrier object
-  return {
-    // SatProbe-like columns:
-    isEnabled,
-    demodulatorName: demodName || `Carrier_${idx + 1}`,
-    frequencyMHz: frequencyMHz ?? null,
-    systemType: systemType || null,
-    symbolRateKsps: symbolRateKsps ?? null,
-    modulation: modulation || null,
-    codeRate: codeRate || null,
-    frameFormat: frameFormat || null,
-    blockSize: blockSize ?? null,
-    fecType: fecType || null,
-    spectrumInversion: spectrumInversion, // boolean
-    isSignaling: isSignaling, // boolean
-
-    // Optional: keep the original row for debugging / later mapping
-    _raw: row,
-  };
-}
-
-/* ------------------- utilities ------------------- */
-
-function pick(obj, keys) {
-  if (!obj || typeof obj !== "object") return undefined;
-  for (const k of keys) {
-    if (k in obj && obj[k] !== undefined && obj[k] !== null && String(obj[k]).trim() !== "") {
-      return obj[k];
-    }
-  }
-  return undefined;
-}
-
-function toNumber(v) {
-  if (v === undefined || v === null) return null;
-  const n = Number(String(v).replace(/[^\d.-]/g, ""));
-  return Number.isFinite(n) ? n : null;
-}
-
-function toBool(v) {
-  if (v === undefined || v === null) return false;
-  if (typeof v === "boolean") return v;
-  const s = String(v).trim().toLowerCase();
-  if (["1", "true", "yes", "y", "on", "enabled"].includes(s)) return true;
-  if (["0", "false", "no", "n", "off", "disabled"].includes(s)) return false;
-  // If it’s something like "MISSION"/"DEGRADED" – treat non-empty as true:
-  return Boolean(s);
-}
-
-function downloadJson(data, filename) {
-  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-
-  setTimeout(() => URL.revokeObjectURL(url), 5000);
 }
