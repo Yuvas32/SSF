@@ -5,12 +5,8 @@ const DEFAULT_MISSING = ["DEVICE", "PSSR4"];
 export default function usePcHealth(pollMs = 3000) {
   const [state, setState] = useState({
     ok: false,
-
-    // devices
     devicesOk: false,
     missingDevices: DEFAULT_MISSING,
-
-    // satscan api call process
     apiOk: false,
     apiMessage: "satscan api call not running",
   });
@@ -19,22 +15,24 @@ export default function usePcHealth(pollMs = 3000) {
     let alive = true;
 
     async function load() {
-      // ---- 1) devices ----
       let devicesOk = false;
       let missingDevices = DEFAULT_MISSING;
 
       try {
-        const r = await fetch("http://localhost:8080/health", { cache: "no-store" });
+        const r = await fetch("http://localhost:8080/health/devices", {
+          cache: "no-store",
+        });
         const j = await r.json();
 
         devicesOk = Boolean(j.ok);
-        missingDevices = (j.missing || []).map((x) => String(x).toUpperCase());
-      } catch (e) {
+        missingDevices = Array.isArray(j.missing)
+          ? j.missing.map((x) => String(x).toUpperCase())
+          : DEFAULT_MISSING;
+      } catch {
         devicesOk = false;
         missingDevices = DEFAULT_MISSING;
       }
 
-      // ---- 2) satscan api-call exe ----
       let apiOk = false;
       let apiMessage = "satscan api call not running";
 
@@ -45,7 +43,9 @@ export default function usePcHealth(pollMs = 3000) {
         const j2 = await r2.json();
 
         apiOk = Boolean(j2.ok);
-        apiMessage = String(j2.message || (apiOk ? "api call satscan ok" : "satscan api call not running"));
+        apiMessage = String(
+          j2.message || (apiOk ? "api call satscan ok" : "satscan api call not running")
+        );
       } catch {
         apiOk = false;
         apiMessage = "satscan api call not running";

@@ -21,9 +21,7 @@ import {
 } from "./spectrumStyles";
 
 export default function SpectrumView({ startFreq, endFreq, lastScan, scanId, mode = "scan" }) {
-
   const isDark = document?.querySelector?.(".app")?.classList?.contains("dark");
-
 
   const [demo, setDemo] = useState({ points: [], unit: "MHz", updatedAt: "" });
   const [live, setLive] = useState(null);
@@ -77,7 +75,7 @@ export default function SpectrumView({ startFreq, endFreq, lastScan, scanId, mod
         if (!alive) return;
 
         setDemo({
-          points: Array.isArray(json.points) ? json.points : [],
+          points: normalizeSpectrumPoints(json.points),
           unit: json.unit || "MHz",
           updatedAt: json.updatedAt || "",
         });
@@ -149,7 +147,7 @@ export default function SpectrumView({ startFreq, endFreq, lastScan, scanId, mod
               const spectrum = await fetchSpectrum(sid);
               if (cancelled || activeScanIdRef.current !== sid) return;
 
-              const pts = Array.isArray(spectrum.points) ? spectrum.points : [];
+              const pts = normalizeSpectrumPoints(spectrum.points);
               if (!pts.length) {
                 setStatusText(`⚠️ .spectrum found but returned 0 points — waiting for valid data… (Scan_${sid})`);
                 return;
@@ -307,7 +305,6 @@ export default function SpectrumView({ startFreq, endFreq, lastScan, scanId, mod
   const transform = `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`;
   const isZoomed = zoom > 1.01;
 
-  // --- Small "card" UI on the page (no big chart here) ---
   return (
     <>
       <div className="panel">
@@ -334,17 +331,15 @@ export default function SpectrumView({ startFreq, endFreq, lastScan, scanId, mod
         </div>
       </div>
 
-      {/* ---------- Popup Modal ---------- */}
       {isOpen && (
         <div
           style={modalOverlayStyle}
           onMouseDown={(e) => {
-            // click outside closes
             if (e.target === e.currentTarget) setIsOpen(false);
           }}
         >
-<div style={isDark ? modalBoxStyleDark : modalBoxStyleLight}>
-  <div style={isDark ? modalHeaderStyleDark : modalHeaderStyleLight}>
+          <div style={isDark ? modalBoxStyleDark : modalBoxStyleLight}>
+            <div style={isDark ? modalHeaderStyleDark : modalHeaderStyleLight}>
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                 <div style={{ fontWeight: 900 }}>Spectrum</div>
                 <span style={badgeStyle}>{hasScan ? (live ? "LIVE" : "SEARCHING") : "DEMO"}</span>
@@ -386,7 +381,6 @@ export default function SpectrumView({ startFreq, endFreq, lastScan, scanId, mod
 
               {error ? <div style={errorBoxStyle}>{error}</div> : null}
 
-              {/* Zoom toolbar */}
               <div style={zoomBarStyle}>
                 <button className="btnSmall" style={zoomBtnStyle} onClick={zoomOut} disabled={zoom <= 1}>
                   −
@@ -410,7 +404,6 @@ export default function SpectrumView({ startFreq, endFreq, lastScan, scanId, mod
                 </div>
               </div>
 
-              {/* Chart */}
               <div
                 ref={frameRef}
                 style={{
@@ -448,7 +441,6 @@ export default function SpectrumView({ startFreq, endFreq, lastScan, scanId, mod
                   </svg>
                 </div>
 
-                {/* Hover marker + tooltip */}
                 {hover ? (
                   <>
                     <div style={{ ...markerDotStyle, left: hover.px, top: hover.py }} />
@@ -482,6 +474,18 @@ export default function SpectrumView({ startFreq, endFreq, lastScan, scanId, mod
 }
 
 /* ---------- helpers ---------- */
+
+function normalizeSpectrumPoints(points) {
+  if (!Array.isArray(points)) return [];
+
+  return points
+    .map((pt) => {
+      const f = Number.isFinite(Number(pt?.f)) ? Number(pt.f) : Number(pt?.x);
+      const p = Number.isFinite(Number(pt?.p)) ? Number(pt.p) : Number(pt?.y);
+      return { f, p };
+    })
+    .filter((pt) => Number.isFinite(pt.f) && Number.isFinite(pt.p));
+}
 
 function cleanupTimers(timersRef) {
   if (!timersRef?.current) return;

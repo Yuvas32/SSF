@@ -1,17 +1,12 @@
 import { Router } from "express";
-import { exec } from "child_process";
+import { basicHealth, devicesHealth } from "../controllers/health.controller.js";
 import { isSatscanApiRunning } from "../services/satscanApiHealth.service.js";
 
 const router = Router();
 
-// basic
-router.get("/health", (req, res) => res.json({ ok: true }));
+router.get("/health", basicHealth);
+router.get("/health/devices", devicesHealth);
 
-// existing: /health/devices (keep yours as-is)
-// If you already have it here, do NOT duplicate it.
-// (Leaving out to avoid conflicts)
-
-// NEW: Satscan API call process health
 router.get("/health/satscan-api", async (req, res) => {
   try {
     const result = await isSatscanApiRunning();

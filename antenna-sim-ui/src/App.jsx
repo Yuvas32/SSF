@@ -142,7 +142,7 @@ export default function App() {
             onScan={handleScan}
             isScanning={isScanning}
             cooldownLeftMs={cooldownLeftMs}
-            systemOk={pcHealth.ok}
+            systemOk={pcHealth.devicesOk}
             missingTokens={pcHealth.missingDevices}
             apiOk={pcHealth.apiOk}
             apiMessage={pcHealth.apiMessage}
