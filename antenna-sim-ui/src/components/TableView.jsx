@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import ExportSatProbeButton from "./ExportSatProbeButton";
+import ConvertToXmlButton from "./ConvertToXmlButton";
 
 /**
  * TableView (Scan Table View)
@@ -150,6 +151,7 @@ export default function TableView({ title = "Table", text = "", maxHeight = 520,
 
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "flex-end" }}>
           <ExportSatProbeButton scanId={scanId} />
+          <ConvertToXmlButton headers={allHeaders} rows={rows} scanId={scanId} />
 
           <button className="btn" onClick={resetToDefault} disabled={!allHeaders.length}>
             Reset to default columns
