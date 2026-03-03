@@ -150,8 +150,8 @@ export default function TableView({ title = "Table", text = "", maxHeight = 520,
         </div>
 
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "flex-end" }}>
-          <ExportSatProbeButton scanId={scanId} />
-          {/* <ConvertToXmlButton headers={allHeaders} rows={rows} scanId={scanId} /> */}
+          {/* <ExportSatProbeButton scanId={scanId} /> */}
+          <ConvertToXmlButton headers={allHeaders} rows={rows} scanId={scanId} />
 
           <button className="btn" onClick={resetToDefault} disabled={!allHeaders.length}>
             Reset to default columns
