@@ -1,15 +1,15 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 export default function ScanControls({
+  isOpen = false,
+  onClose,
   onScan,
   isScanning,
   cooldownLeftMs = 0,
 
-  // Device Manager health
   systemOk = false,
   missingTokens = [],
 
-  // NEW: API_Call_Satscan.exe health
   apiOk = false,
   apiMessage = "satscan api call not running",
 }) {
@@ -33,14 +33,34 @@ export default function ScanControls({
     return "";
   }, [startFreq, stopFreq]);
 
-  function handleScanClick() {
+  useEffect(() => {
+    if (!isOpen) return;
+
+    function handleKeyDown(e) {
+      if (e.key === "Escape") {
+        onClose?.();
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, onClose]);
+
+  async function handleScanClick() {
     if (!systemOk) return;
     if (!apiOk) return;
     if (validationError) return;
     if (isScanning) return;
     if (isCooldownActive) return;
 
-    onScan?.({ start: Number(startFreq), stop: Number(stopFreq) });
+    await onScan?.({ start: Number(startFreq), stop: Number(stopFreq) });
+    onClose?.();
+  }
+
+  function handleOverlayClick(e) {
+    if (e.target === e.currentTarget) {
+      onClose?.();
+    }
   }
 
   const disabled =
@@ -58,79 +78,71 @@ export default function ScanControls({
       ? apiMessage
       : validationError || (isScanning ? "Saving scan..." : isCooldownActive ? "Cooldown" : "Run scan");
 
-  const detectedCount = Math.max(0, 2 - (missingTokens?.length || 0));
+  if (!isOpen) return null;
 
   return (
-    <div className="toolbar">
-      <div className="toolbarGroup">
-        <label className="field">
-          <span className="fieldLabel">Start frequency</span>
-          <input
-            className="input"
-            type="number"
-            placeholder="e.g. 10700"
-            value={startFreq}
-            onChange={(e) => setStartFreq(e.target.value)}
-            disabled={isScanning}
-          />
-        </label>
+    <div className="scanModalOverlay" onClick={handleOverlayClick}>
+      <div className="scanModalCard" role="dialog" aria-modal="true" aria-label="Scan settings">
+        <div className="scanModalHeader">
+          <div className="scanModalTitle">Scan settings</div>
 
-        <label className="field">
-          <span className="fieldLabel">Stop frequency</span>
-          <input
-            className="input"
-            type="number"
-            placeholder="e.g. 12750"
-            value={stopFreq}
-            onChange={(e) => setStopFreq(e.target.value)}
-            disabled={isScanning}
-          />
-        </label>
-
-        <button
-          className={`btn ${disabled ? "btnDisabled" : ""}`}
-          onClick={handleScanClick}
-          disabled={disabled}
-          title={title}
-        >
-          {buttonText}
-        </button>
-      </div>
-
-      {/* Devices status */}
-      <div className="toolbarError" style={{ background: "transparent", color: "inherit" }}>
-        <b>Detected devices:</b> {detectedCount}/2{" "}
-        {systemOk ? (
-          <b style={{ color: "green" }}>OK</b>
-        ) : (
-          <b style={{ color: "crimson" }}>ERROR</b>
-        )}
-      </div>
-
-      {/* NEW: Satscan API call process status */}
-      <div className="toolbarError" style={{ background: "transparent", color: "inherit" }}>
-        <b>API_Call_Satscan:</b>{" "}
-        {apiOk ? (
-          <b style={{ color: "green" }}>api call satscan ok</b>
-        ) : (
-          <b style={{ color: "crimson" }}>satscan api call not running</b>
-        )}
-      </div>
-
-      {/* Existing errors */}
-      {!systemOk && missingTokens.length > 0 && (
-        <div className="toolbarError">
-          Health check failed: missing <b>{missingTokens.join(", ")}</b>
+          <button className="scanModalCloseBtn" onClick={onClose} type="button" title="Close">
+            ×
+          </button>
         </div>
-      )}
 
-      {!apiOk && (
-        <div className="toolbarError">
-          satscan api call not running
+        <div className="scanModalBody">
+          <div className="toolbarGroup scanModalToolbarGroup">
+            <label className="field">
+              <span className="fieldLabel">Start frequency</span>
+              <input
+                className="input"
+                type="number"
+                placeholder="e.g. 10700"
+                value={startFreq}
+                onChange={(e) => setStartFreq(e.target.value)}
+                disabled={isScanning}
+              />
+            </label>
+
+            <label className="field">
+              <span className="fieldLabel">Stop frequency</span>
+              <input
+                className="input"
+                type="number"
+                placeholder="e.g. 12750"
+                value={stopFreq}
+                onChange={(e) => setStopFreq(e.target.value)}
+                disabled={isScanning}
+              />
+            </label>
+
+            <button
+              className={`btn ${disabled ? "btnDisabled" : ""}`}
+              onClick={handleScanClick}
+              disabled={disabled}
+              title={title}
+              type="button"
+            >
+              {buttonText}
+            </button>
+          </div>
+
+          {!systemOk && missingTokens.length > 0 && (
+            <div className="toolbarError">
+              Health check failed: missing <b>{missingTokens.join(", ")}</b>
+            </div>
+          )}
+
+          {!apiOk && (
+            <div className="toolbarError">
+              {apiMessage || "satscan api call not running"}
+            </div>
+          )}
+
+          {validationError && <div className="toolbarError">{validationError}</div>}
         </div>
-      )}
-
-      {validationError && <div className="toolbarError">{validationError}</div>}
+      </div>
     </div>
   );
 }

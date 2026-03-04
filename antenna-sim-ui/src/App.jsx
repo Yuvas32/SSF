@@ -1,3 +1,4 @@
+import { useMemo, useState } from "react";
 import "./App.css";
 
 import { FrequenciesTable, ScanControls, SpectrumView } from "./components";
@@ -20,22 +21,50 @@ export default function App() {
     setActiveTab,
   });
 
+  const [isScanPopupOpen, setIsScanPopupOpen] = useState(false);
+
+  const detectedDevicesCount = Math.max(0, 2 - (pcHealth.missingDevices?.length || 0));
+  const detectedDevicesText = `${detectedDevicesCount}/2`;
+
+  const resultMessage = useMemo(() => {
+    if (!pcHealth.devicesOk && pcHealth.missingDevices?.length) {
+      return `missing ${pcHealth.missingDevices.join(", ")}`;
+    }
+
+    if (!pcHealth.apiOk) {
+      return pcHealth.apiMessage || "API error";
+    }
+
+    return "ok";
+  }, [pcHealth]);
+
   return (
     <div className={`app ${theme}`}>
-      <AppHeader theme={theme} onToggleTheme={toggleTheme} />
+      <AppHeader
+        theme={theme}
+        onToggleTheme={toggleTheme}
+        onOpenScanPopup={() => setIsScanPopupOpen(true)}
+        detectedDevicesText={detectedDevicesText}
+        devicesOk={pcHealth.devicesOk}
+        apiOk={pcHealth.apiOk}
+        apiMessage={pcHealth.apiMessage || "unknown"}
+        resultMessage={resultMessage}
+      />
+
+      <ScanControls
+        isOpen={isScanPopupOpen}
+        onClose={() => setIsScanPopupOpen(false)}
+        onScan={app.handleScan}
+        isScanning={app.isScanning}
+        cooldownLeftMs={cooldown.cooldownLeftMs}
+        systemOk={pcHealth.devicesOk}
+        missingTokens={pcHealth.missingDevices}
+        apiOk={pcHealth.apiOk}
+        apiMessage={pcHealth.apiMessage}
+      />
 
       <div className="container">
         <div className="stack">
-          <ScanControls
-            onScan={app.handleScan}
-            isScanning={app.isScanning}
-            cooldownLeftMs={cooldown.cooldownLeftMs}
-            systemOk={pcHealth.devicesOk}
-            missingTokens={pcHealth.missingDevices}
-            apiOk={pcHealth.apiOk}
-            apiMessage={pcHealth.apiMessage}
-          />
-
           <AutoSaveMessage message={app.autoSaveMsg} />
 
           <AppTabs

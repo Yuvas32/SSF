@@ -40,7 +40,7 @@ body {
 }
 
 .themeBtn{
-  height: 38px;
+  height: 32px;
   padding: 0 12px;
   border-radius: 10px;
   border: 1px solid var(--border);
@@ -48,10 +48,11 @@ body {
   color: var(--btn-text);
   cursor: pointer;
   font-weight: 700;
+  white-space: nowrap;
 }
 
 .topbar{
-  padding: 14px 18px;
+  padding: 8px 14px;
   border-bottom: 1px solid var(--border);
   background: color-mix(in srgb, var(--bg) 85%, #ffffff 15%);
   display: flex;
@@ -71,12 +72,109 @@ body {
 .topbarTitle{
   font-weight: 800;
   letter-spacing: 0.2px;
+  font-size: 14px;
+  white-space: nowrap;
 }
 
 .topbarSubtitle{
   margin-top: 2px;
   font-size: 12px;
   color: var(--muted);
+}
+
+/* ✅ UPDATED: horizontal compact navbar layout */
+.topbarLeft{
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex: 1;
+}
+
+.topbarActions{
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.topbarStatusRow{
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.topbarStatusItem{
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 30px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  max-width: 100%;
+  min-width: 0;
+  font-size: 12px;
+  line-height: 1;
+}
+
+.topbarStatusItem.isOk{
+  border-color: rgba(34, 197, 94, 0.35);
+}
+
+.topbarStatusItem.isError{
+  border-color: rgba(239, 68, 68, 0.35);
+}
+
+.statusIconWrap{
+  width: 16px;
+  height: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+}
+
+.statusIconSvg{
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.topbarStatusItem.isOk .statusIconWrap,
+.topbarStatusItem.isOk .statusCompactText{
+  color: #16a34a;
+}
+
+.topbarStatusItem.isError .statusIconWrap,
+.topbarStatusItem.isError .statusCompactText{
+  color: #dc2626;
+}
+
+.statusCompactText{
+  display: inline-block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 260px;
+}
+
+.topbarResultMessage{
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid #FCA5A5;
+  background: #FEE2E2;
+  color: #991B1B;
+  font-size: 13px;
 }
 
 /* ✅ OVERVIEW SCROLL:
@@ -423,4 +521,133 @@ body {
 
 .app.dark .tableViewTable tr:hover td{
   background: rgba(255,255,255,0.06);
+}
+
+@media (max-width: 900px){
+  .topbar{
+    align-items: flex-start;
+  }
+
+  .topbarLeft{
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .themeBtn{
+    flex-shrink: 0;
+  }
+}
+
+.openScanBtn{
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--text);
+  cursor: pointer;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.openScanBtn:hover{
+  filter: brightness(0.98);
+}
+
+.app.dark .openScanBtn{
+  background: rgba(255,255,255,0.06);
+  color: rgba(255,255,255,0.92);
+}
+
+.scanModalOverlay{
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(0,0,0,0.42);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 72px 16px 16px;
+}
+
+.scanModalCard{
+  width: min(760px, 100%);
+  background: var(--card);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: 0 24px 60px rgba(0,0,0,0.28);
+  overflow: hidden;
+}
+
+.scanModalHeader{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.scanModalTitle{
+  font-size: 16px;
+  font-weight: 900;
+}
+
+.scanModalCloseBtn{
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  font-size: 22px;
+  line-height: 1;
+}
+
+.scanModalBody{
+  padding: 16px;
+}
+
+.scanModalToolbarGroup{
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 10px;
+  align-items: end;
+}
+
+@media (max-width: 900px){
+  .topbar{
+    align-items: flex-start;
+  }
+
+  .topbarLeft{
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .topbarActions{
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .themeBtn{
+    flex-shrink: 0;
+  }
+}
+
+@media (max-width: 700px){
+  .scanModalToolbarGroup{
+    grid-template-columns: 1fr;
+  }
+
+  .scanModalOverlay{
+    padding-top: 56px;
+  }
 }
