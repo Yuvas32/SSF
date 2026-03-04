@@ -5,7 +5,7 @@ import ScanControls from "./components/ScanControls";
 import SpectrumView from "./components/SpectrumView/SpectrumView";
 import XmlTableViewer from "./components/XmlTableViewer/XmlTableViewer";
 import FrequenciesTable from "./components/FrequenciesTable";
-import TableView from "./components/TableView";
+import TableView from "./components/TableView/TableView";
 
 import useCooldown from "./hooks/useCooldown";
 import usePcHealth from "./hooks/usePcHealth";
