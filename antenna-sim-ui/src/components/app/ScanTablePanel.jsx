@@ -1,4 +1,4 @@
-import TableView from "./TableView/TableView";
+import TableView from "../TableView/TableView";
 
 export default function ScanTablePanel({ scanId, tableText, onClear }) {
   return (

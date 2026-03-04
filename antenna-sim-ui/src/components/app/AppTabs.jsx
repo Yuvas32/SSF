@@ -1,5 +1,5 @@
-import { APP_TABS } from "../utils/appConstants";
-import { labelForTab } from "../utils/tabUtils";
+import { APP_TABS } from "../../utils/appConstants";
+import { labelForTab } from "../../utils/tabUtils";
 
 export default function AppTabs({ activeTab, setActiveTab, scanId }) {
   return (

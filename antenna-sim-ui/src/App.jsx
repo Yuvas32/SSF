@@ -1,19 +1,9 @@
 import "./App.css";
 
-import ScanControls from "./components/ScanControls";
-import SpectrumView from "./components/SpectrumView/SpectrumView";
-import FrequenciesTable from "./components/FrequenciesTable";
-import AppHeader from "./components/AppHeader";
-import AppTabs from "./components/AppTabs";
-import AutoSaveMessage from "./components/AutoSaveMessage";
-import ScanTablePanel from "./components/ScanTablePanel";
-import XmlPanel from "./components/XmlPanel";
+import { FrequenciesTable, ScanControls, SpectrumView } from "./components";
+import { AppHeader, AppTabs, AutoSaveMessage, ScanTablePanel, XmlPanel } from "./components";
 
-import useCooldown from "./hooks/useCooldown";
-import usePcHealth from "./hooks/usePcHealth";
-import useAppTheme from "./hooks/useAppTheme";
-import useActiveTab from "./hooks/useActiveTab";
-import useScanActions from "./hooks/useScanActions";
+import { useCooldown, usePcHealth, useAppTheme, useActiveTab, useScanActions } from "./hooks";
 
 import { COOLDOWN_MS } from "./utils/appConstants";
 

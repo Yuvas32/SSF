@@ -1,4 +1,4 @@
-import XmlTableViewer from "./XmlTableViewer/XmlTableViewer";
+import XmlTableViewer from "../XmlTableViewer/XmlTableViewer";
 
 export default function XmlPanel({ scan, onExpose, onAutoSaveMsg }) {
   return (
