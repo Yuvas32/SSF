@@ -1,3 +1,5 @@
+import { API_BASE } from "../config/api";
+
 export function buildDisplayedScan(row) {
   return {
     dbId: row.id,
@@ -8,7 +10,7 @@ export function buildDisplayedScan(row) {
 }
 
 export async function loadTmptxtByScanId(scanId) {
-  const res = await fetch(`http://localhost:8080/satscan/output/${scanId}/tmptxt`, {
+  const res = await fetch(`${API_BASE}/satscan/output/${scanId}/tmptxt`, {
     cache: "no-store",
   });
 

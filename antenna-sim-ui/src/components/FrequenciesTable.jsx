@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { API_BASE } from "../config/api";
 
 export default function FrequenciesTable({ onDisplay }) {
   const [rows, setRows] = useState([]);
@@ -22,7 +23,7 @@ export default function FrequenciesTable({ onDisplay }) {
     setLoading(true);
     setErr("");
     try {
-      const res = await fetch("http://localhost:8080/frequencies?limit=200");
+      const res = await fetch(`${API_BASE}/frequencies?limit=200`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       setRows(Array.isArray(data) ? data : []);
@@ -109,7 +110,7 @@ function Row({ row, onDeleted, onDisplay }) {
     if (!ok) return;
 
     try {
-      const res = await fetch(`http://localhost:8080/frequencies/${id}`, {
+      const res = await fetch(`${API_BASE}/frequencies/${id}`, {
         method: "DELETE",
       });
 

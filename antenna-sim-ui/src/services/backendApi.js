@@ -1,4 +1,6 @@
-const BASE = "http://localhost:8080";
+import { API_BASE } from "../config/api";
+
+const BASE = API_BASE;
 
 async function httpJson(url, options) {
   const res = await fetch(url, options);

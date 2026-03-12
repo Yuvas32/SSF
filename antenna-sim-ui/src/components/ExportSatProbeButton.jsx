@@ -1,4 +1,5 @@
 import React from "react";
+import { API_BASE } from "../config/api";
 
 export default function ExportSatProbeButton({ scanId = null }) {
   const canDownload = Number.isFinite(Number(scanId)) && Number(scanId) > 0;
@@ -8,7 +9,7 @@ export default function ExportSatProbeButton({ scanId = null }) {
 
     try {
       const res = await fetch(
-        `http://localhost:8080/satscan/output/${scanId}/resultxml/download`,
+        `${API_BASE}/satscan/output/${scanId}/resultxml/download`,
         {
           method: "GET",
           cache: "no-store",

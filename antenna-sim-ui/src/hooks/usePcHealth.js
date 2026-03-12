@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { API_BASE } from "../config/api";
 
 const DEFAULT_MISSING = ["DEVICE", "PSSR4"];
 
@@ -19,7 +20,7 @@ export default function usePcHealth(pollMs = 3000) {
       let missingDevices = DEFAULT_MISSING;
 
       try {
-        const r = await fetch("http://localhost:8080/health/devices", {
+        const r = await fetch(`${API_BASE}/health/devices`, {
           cache: "no-store",
         });
         const j = await r.json();
@@ -37,7 +38,7 @@ export default function usePcHealth(pollMs = 3000) {
       let apiMessage = "satscan api call not running";
 
       try {
-        const r2 = await fetch("http://localhost:8080/health/satscan-api", {
+        const r2 = await fetch(`${API_BASE}/health/satscan-api`, {
           cache: "no-store",
         });
         const j2 = await r2.json();
