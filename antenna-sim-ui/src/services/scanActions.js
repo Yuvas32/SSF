@@ -1,24 +1,17 @@
-import { createFrequency, saveScanXmlAfterCreate } from "./backendApi";
+import { startScan } from "./backendApi";
 
-export async function runScanAction({ start, stop }) {
-  const saved = await createFrequency({ start, end: stop });
-
-  const xmlResult = await saveScanXmlAfterCreate({
-    scanId: saved.id,
-    start: saved.start,
-    stop: saved.end,
-  });
+export async function runScanAction({ start, stop, scanName }) {
+  const result = await startScan({ freqStart: start, freqEnd: stop, scanName });
 
   const nextScan = {
-    dbId: saved.id,
-    start: saved.start,
-    stop: saved.end,
-    ts: new Date(saved.createdAt).toLocaleString(),
+    dbId: result.scanId,
+    start: start,
+    stop: stop,
+    ts: new Date().toLocaleString(),
   };
 
   return {
-    saved,
-    xmlResult,
+    xmlResult: result,
     nextScan,
   };
 }
@@ -36,11 +29,12 @@ export function buildAutoSaveMessage(xmlResult) {
   return `✅ XML saved to: ${(xmlResult?.savedTo || []).join(" , ")}`;
 }
 
-export function buildScanErrorState({ start, stop, error }) {
+export function buildScanErrorState({ start, stop, scanName, error }) {
   return {
     dbId: null,
     start,
     stop,
+    scanName,
     ts: new Date().toLocaleString(),
     error: error?.message || "Failed to save scan",
   };

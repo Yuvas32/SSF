@@ -41,3 +41,6 @@ export const OUT_DIRS = (() => {
 export const SATSCAN_API_EXE =
   process.env.SATSCAN_API_EXE || "API_Call_Satscan.exe";
 
+// Scan timeout in minutes
+export const SCAN_TIMEOUT_MINUTES = Number(process.env.SCAN_TIMEOUT_MINUTES || 5);
+

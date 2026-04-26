@@ -22,7 +22,7 @@ export default function useScanActions({ pcHealth, cooldown, setActiveTab }) {
     return !isScanning && !cooldown.isCooldownActive && pcHealth.ok;
   }, [isScanning, cooldown.isCooldownActive, pcHealth.ok]);
 
-  async function handleScan({ start, stop }) {
+  async function handleScan({ start, stop, scanName }) {
     if (!canScan) return;
 
     setAutoSaveMsg("");
@@ -32,7 +32,7 @@ export default function useScanActions({ pcHealth, cooldown, setActiveTab }) {
     await new Promise(requestAnimationFrame);
 
     try {
-      const { xmlResult, nextScan } = await runScanAction({ start, stop });
+      const { xmlResult, nextScan } = await runScanAction({ start, stop, scanName });
 
       setAutoSaveMsg(buildAutoSaveMessage(xmlResult));
       setSpectrumMode("scan");
@@ -40,7 +40,7 @@ export default function useScanActions({ pcHealth, cooldown, setActiveTab }) {
       setActiveTab("spectrum");
     } catch (error) {
       console.error(error);
-      setScan(buildScanErrorState({ start, stop, error }));
+      setScan(buildScanErrorState({ start, stop, scanName, error }));
       setActiveTab("spectrum");
       setAutoSaveMsg(`❌ ${error?.message || "Scan failed"}`);
     } finally {

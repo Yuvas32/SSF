@@ -22,3 +22,14 @@ export async function fetchSpectrum(scanId) {
   if (!res.ok) throw new Error((await res.text()) || `HTTP ${res.status}`);
   return await res.json();
 }
+
+export async function fetchMonitor(scanId) {
+  const res = await fetch(`${API_BASE}/satscan/monitor/${scanId}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    cache: "no-store"
+  });
+  const j = await res.json();
+  if (!res.ok) throw new Error(j.error || `HTTP ${res.status}`);
+  return j;
+}

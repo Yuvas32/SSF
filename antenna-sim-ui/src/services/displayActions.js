@@ -3,8 +3,8 @@ import { API_BASE } from "../config/api";
 export function buildDisplayedScan(row) {
   return {
     dbId: row.id,
-    start: row.start,
-    stop: row.end,
+    start: null, // Not available
+    stop: null, // Not available
     ts: new Date(row.createdAt).toLocaleString(),
   };
 }

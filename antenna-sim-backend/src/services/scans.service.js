@@ -1,7 +1,7 @@
 // antanna-sim-backend/src/services/scans.service.js
 import fs from "fs/promises";
 import path from "path";
-import { OUT_DIRS } from "../config/env.js";
+import { OUT_DIRS, SATSCAN_INPUT_DIR } from "../config/env.js";
 import { safeFileName } from "../utils/safeFileName.js";
 
 export async function saveXmlToFolder({ scanName, xml }) {
@@ -13,12 +13,16 @@ export async function saveXmlToFolder({ scanName, xml }) {
 
   const base = safeFileName(scanName);
   const fileName = base.toLowerCase().endsWith(".xml") ? base : `${base}.xml`;
+  const inputFileName = base.toLowerCase().startsWith("scan_")
+    ? fileName
+    : `Scan_${fileName}`;
 
   // Write to all output dirs, collect successes + failures
   const results = await Promise.allSettled(
     OUT_DIRS.map(async (dir) => {
       await fs.mkdir(dir, { recursive: true });
-      const fullPath = path.join(dir, fileName);
+      const nameForDir = path.resolve(dir) === path.resolve(SATSCAN_INPUT_DIR) ? inputFileName : fileName;
+      const fullPath = path.join(dir, nameForDir);
       await fs.writeFile(fullPath, xml, "utf8");
       return fullPath;
     })

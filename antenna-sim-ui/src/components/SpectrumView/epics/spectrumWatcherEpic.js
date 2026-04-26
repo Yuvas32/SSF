@@ -1,4 +1,4 @@
-import { fetchInputCountSafe, fetchOutputStatus, fetchSpectrum } from "../spectrumApi";
+import { fetchInputCountSafe, fetchOutputStatus, fetchSpectrum, fetchMonitor } from "../spectrumApi";
 import { fmtTime } from "../spectrumMath";
 import { cleanupTimers, normalizeSpectrumPoints, sleep } from "../utils/spectrumHelpers";
 
@@ -15,6 +15,9 @@ export async function runSpectrumWatcherEpic(ctx, isCancelled) {
     setWaitingSecLeft,
     setElapsedSec,
     setError,
+
+    completeScan,
+    errorScan,
   } = ctx;
 
   const stillValid = () => !isCancelled() && activeScanIdRef.current === sid;
@@ -44,45 +47,52 @@ export async function runSpectrumWatcherEpic(ctx, isCancelled) {
 
   setStatusText(`Searching for .spectrum file… (Scan_${sid})`);
 
-  const pollOnce = async () => {
-    try {
-      const st = await fetchOutputStatus(sid);
+  try {
+    let isCompleted = false;
+    if (mode === "display") {
+      const status = await fetchOutputStatus(sid);
+      if (!stillValid()) return;
+      isCompleted = status.completed;
+    } else {
+      const monitorResult = await fetchMonitor(sid);
+      if (!stillValid()) return;
+      isCompleted = monitorResult.status === "completed";
+    }
+
+    if (isCompleted) {
+      const spectrum = await fetchSpectrum(sid);
       if (!stillValid()) return;
 
-      if (st?.spectrumFound) {
-        const spectrum = await fetchSpectrum(sid);
-        if (!stillValid()) return;
-
-        const pts = normalizeSpectrumPoints(spectrum.points);
-        if (!pts.length) {
-          setStatusText(`⚠️ .spectrum found but returned 0 points — waiting for valid data… (Scan_${sid})`);
-          return;
-        }
-
-        setLive({
-          points: pts,
-          unit: spectrum.unit || "MHz",
-          updatedAt: spectrum.updatedAt || "",
-          source: spectrum.source || "",
-        });
-
-        const elapsedNow = Math.floor((Date.now() - startTsRef.current) / 1000);
-        setElapsedSec(elapsedNow);
-        setStatusText(`✅ .spectrum found after ${fmtTime(elapsedNow)} — showing real spectrum`);
-
-        cleanupTimers(timersRef);
+      const pts = normalizeSpectrumPoints(spectrum.points);
+      if (!pts.length) {
+        setError(`⚠️ .spectrum found but returned 0 points`);
         return;
       }
 
-      setStatusText(`Searching for .spectrum file… (Scan_${sid})`);
-    } catch (e) {
-      if (!stillValid()) return;
-      setError(e?.message || "Failed to check .spectrum status");
+      setLive({
+        points: pts,
+        unit: spectrum.unit || "MHz",
+        updatedAt: spectrum.updatedAt || "",
+        source: spectrum.source || "",
+      });
+
+      const elapsedNow = Math.floor((Date.now() - startTsRef.current) / 1000);
+      setElapsedSec(elapsedNow);
+      setStatusText(`✅ .spectrum found after ${fmtTime(elapsedNow)} — showing real spectrum`);
+
+      completeScan();
+      cleanupTimers(timersRef);
+    } else {
+      if (mode === "display") {
+        setError("Scan not completed yet");
+      } else {
+        setError(monitorResult.error || "Monitoring timed out");
+      }
+      errorScan();
     }
-  };
-
-  await pollOnce();
-  if (!stillValid()) return;
-
-  timersRef.current.pollTimer = setInterval(pollOnce, 20_000);
+  } catch (e) {
+    if (!stillValid()) return;
+    setError(e?.message || "Failed to monitor scan");
+    errorScan();
+  }
 }

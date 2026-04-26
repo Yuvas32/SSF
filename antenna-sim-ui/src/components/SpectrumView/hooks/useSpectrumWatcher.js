@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { runSpectrumWatcherEpic } from "../epics/spectrumWatcherEpic";
 import { cleanupTimers } from "../utils/spectrumHelpers";
+import { useScanStatus } from "../../../hooks/scanStatusContext.jsx";
 
 export default function useSpectrumWatcher({ sid, hasScan, mode }) {
   const [live, setLive] = useState(null);
@@ -8,6 +9,8 @@ export default function useSpectrumWatcher({ sid, hasScan, mode }) {
   const [elapsedSec, setElapsedSec] = useState(0);
   const [waitingSecLeft, setWaitingSecLeft] = useState(0);
   const [error, setError] = useState("");
+
+  const { startScan, completeScan, errorScan } = useScanStatus();
 
   const timersRef = useRef({ elapsedTimer: null, waitTimer: null, pollTimer: null });
   const startTsRef = useRef(0);
@@ -27,6 +30,8 @@ export default function useSpectrumWatcher({ sid, hasScan, mode }) {
     activeScanIdRef.current = sid;
     startTsRef.current = Date.now();
 
+    startScan();
+
     timersRef.current.elapsedTimer = setInterval(() => {
       setElapsedSec(Math.floor((Date.now() - startTsRef.current) / 1000));
     }, 1000);
@@ -43,6 +48,9 @@ export default function useSpectrumWatcher({ sid, hasScan, mode }) {
       setWaitingSecLeft,
       setElapsedSec,
       setError,
+
+      completeScan,
+      errorScan,
     };
 
     let cancelled = false;

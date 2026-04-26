@@ -1,4 +1,4 @@
-import { useMemo, useRef } from "react";
+import { forwardRef, useMemo, useRef, useImperativeHandle } from "react";
 import { buildPolyline } from "./spectrumMath";
 
 import SpectrumPanel from "./components/SpectrumPanel";
@@ -12,11 +12,11 @@ import useModalEscClose from "./hooks/useModalEscClose";
 
 import { normalizeSpectrumPoints } from "./utils/spectrumHelpers";
 
-export default function SpectrumView({ startFreq, endFreq, lastScan, scanId, mode = "scan" }) {
+const SpectrumView = forwardRef(({ startFreq, endFreq, lastScan, scanId, mode = "scan" }, ref) => {
   const isDark = document?.querySelector?.(".app")?.classList?.contains("dark");
 
-  const sid = Number(scanId);
-  const hasScan = Number.isFinite(sid) && sid > 0;
+  const sid = scanId;
+  const hasScan = sid && typeof sid === 'string' && sid.trim() !== '';
 
   // UI modal state
   const { isOpen, open, close } = useModalEscClose();
@@ -47,6 +47,11 @@ export default function SpectrumView({ startFreq, endFreq, lastScan, scanId, mod
     pan: zoomPan.pan,
     setHover: zoomPan.setHover,
   });
+
+  // Expose modal open function to parent via ref
+  useImperativeHandle(ref, () => ({
+    openModal: open,
+  }), [open]);
 
   return (
     <>
@@ -83,4 +88,8 @@ export default function SpectrumView({ startFreq, endFreq, lastScan, scanId, mod
       />
     </>
   );
-}
+});
+
+SpectrumView.displayName = 'SpectrumView';
+
+export default SpectrumView;

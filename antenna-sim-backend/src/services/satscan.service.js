@@ -1,6 +1,6 @@
 import fs from "fs/promises";
 import path from "path";
-import { SATSCAN_INPUT_DIR, SATSCAN_OUTPUT_DIR } from "../config/env.js";
+import { SATSCAN_INPUT_DIR, SATSCAN_OUTPUT_DIR, SCAN_TIMEOUT_MINUTES } from "../config/env.js";
 
 export async function countFilesInInputDir() {
   const dir = SATSCAN_INPUT_DIR;
@@ -33,6 +33,8 @@ export async function getOutputStatusForScanId(scanId) {
 
   const spectrumPath = await findSpectrumFile(folderPath);
   const spectrumFound = Boolean(spectrumPath);
+  const resultXmlPath = await findResultXmlFile(folderPath);
+  const resultXmlFound = Boolean(resultXmlPath);
 
   return {
     scanId,
@@ -42,7 +44,9 @@ export async function getOutputStatusForScanId(scanId) {
     spectrumFound,
     spectrumPath: spectrumPath || null,
     spectrumFileName: spectrumPath ? path.basename(spectrumPath) : null,
-    completed: spectrumFound,
+    resultXmlFound,
+    resultXmlPath: resultXmlPath || null,
+    completed: spectrumFound && resultXmlFound,
   };
 }
 
@@ -144,6 +148,27 @@ export async function getResultXmlForScanId(scanId) {
   throw err;
 }
 
+export async function monitorScanOutput(scanId) {
+  const folderPath = path.join(SATSCAN_OUTPUT_DIR, `Scan_${scanId}`);
+  const timeoutMs = SCAN_TIMEOUT_MINUTES * 60 * 1000; // to ms
+  const pollIntervalMs = 5000; // poll every 5 seconds
+  const startTime = Date.now();
+
+  while (Date.now() - startTime < timeoutMs) {
+    const folderExists = await exists(folderPath);
+    if (folderExists) {
+      const spectrumPath = await findPSDSpectrumFile(folderPath, scanId);
+      const resultXmlPath = await findResultXmlFile(folderPath);
+      if (spectrumPath && resultXmlPath) {
+        return { status: "completed", spectrumPath };
+      }
+    }
+    await new Promise(resolve => setTimeout(resolve, pollIntervalMs));
+  }
+
+  return { status: "timeout", error: `No PSD spectrum file and result.xml found within ${SCAN_TIMEOUT_MINUTES} minutes` };
+}
+
 /* ---------------- helpers ---------------- */
 
 async function safeReadDir(dir) {
@@ -161,6 +186,50 @@ async function exists(p) {
   } catch {
     return false;
   }
+}
+
+async function findPSDSpectrumFile(rootDir, scanId) {
+  const rootEntries = await safeReadDir(rootDir);
+
+  for (const e of rootEntries) {
+    if (e.isFile() && e.name.startsWith(`Scan_${scanId}_PSD_`) && e.name.toLowerCase().endsWith(".spectrum")) {
+      return path.join(rootDir, e.name);
+    }
+  }
+
+  const dirs = rootEntries
+    .filter((e) => e.isDirectory())
+    .map((d) => path.join(rootDir, d.name));
+
+  for (const d of dirs) {
+    const found = await findPSDSpectrumFileDepth(d, scanId, 2);
+    if (found) return found;
+  }
+
+  return null;
+}
+
+async function findPSDSpectrumFileDepth(dir, scanId, depthLeft) {
+  const entries = await safeReadDir(dir);
+
+  for (const e of entries) {
+    if (e.isFile() && e.name.startsWith(`Scan_${scanId}_PSD_`) && e.name.toLowerCase().endsWith(".spectrum")) {
+      return path.join(dir, e.name);
+    }
+  }
+
+  if (depthLeft <= 0) return null;
+
+  const subDirs = entries
+    .filter((e) => e.isDirectory())
+    .map((d) => path.join(dir, d.name));
+
+  for (const subDir of subDirs) {
+    const found = await findPSDSpectrumFileDepth(subDir, scanId, depthLeft - 1);
+    if (found) return found;
+  }
+
+  return null;
 }
 
 async function findSpectrumFile(rootDir) {

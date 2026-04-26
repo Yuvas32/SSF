@@ -15,11 +15,13 @@ export default function ScanControls({
 }) {
   const [startFreq, setStartFreq] = useState("");
   const [stopFreq, setStopFreq] = useState("");
+  const [scanName, setScanName] = useState("");
 
   const isCooldownActive = cooldownLeftMs > 0;
 
   const validationError = useMemo(() => {
-    if (!startFreq && !stopFreq) return "";
+    if (!startFreq && !stopFreq && !scanName) return "";
+    if (!scanName) return "Scan name is required.";
     if (!startFreq) return "Start frequency is required.";
     if (!stopFreq) return "Stop frequency is required.";
 
@@ -31,7 +33,7 @@ export default function ScanControls({
     if (s >= e) return "Start frequency must be smaller than stop frequency.";
 
     return "";
-  }, [startFreq, stopFreq]);
+  }, [startFreq, stopFreq, scanName]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -53,7 +55,7 @@ export default function ScanControls({
     if (isScanning) return;
     if (isCooldownActive) return;
 
-    await onScan?.({ start: Number(startFreq), stop: Number(stopFreq) });
+    await onScan?.({ start: Number(startFreq), stop: Number(stopFreq), scanName });
     onClose?.();
   }
 
@@ -93,6 +95,18 @@ export default function ScanControls({
 
         <div className="scanModalBody">
           <div className="toolbarGroup scanModalToolbarGroup">
+            <label className="field">
+              <span className="fieldLabel">Scan name</span>
+              <input
+                className="input"
+                type="text"
+                placeholder="e.g. MyScan"
+                value={scanName}
+                onChange={(e) => setScanName(e.target.value)}
+                disabled={isScanning}
+              />
+            </label>
+
             <label className="field">
               <span className="fieldLabel">Start frequency</span>
               <input

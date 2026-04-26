@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useRef } from "react";
 import "./App.css";
 
 import { FrequenciesTable, ScanControls, SpectrumView } from "./components";
@@ -11,6 +11,7 @@ import { COOLDOWN_MS } from "./utils/appConstants";
 export default function App() {
   const { theme, toggleTheme } = useAppTheme();
   const { activeTab, setActiveTab } = useActiveTab();
+  const spectrumViewRef = useRef(null);
 
   const pcHealth = usePcHealth(3000);
   const cooldown = useCooldown(COOLDOWN_MS);
@@ -37,6 +38,14 @@ export default function App() {
 
     return "ok";
   }, [pcHealth]);
+
+  const handleSpectrumTabClick = () => {
+    setActiveTab("spectrum");
+    // Auto-open the spectrum modal
+    setTimeout(() => {
+      spectrumViewRef.current?.openModal?.();
+    }, 0);
+  };
 
   return (
     <div className={`app ${theme}`}>

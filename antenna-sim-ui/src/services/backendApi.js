@@ -17,11 +17,11 @@ export async function getDevicesHealth() {
   return httpJson(`${BASE}/health/devices`, { cache: "no-store" });
 }
 
-export async function createFrequency({ start, end }) {
-  return httpJson(`${BASE}/frequencies`, {
+export async function startScan({ freqStart, freqEnd, scanName }) {
+  return httpJson(`${BASE}/scans/start`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ start, end }),
+    body: JSON.stringify({ freqStart, freqEnd, scanName }),
   });
 }
 

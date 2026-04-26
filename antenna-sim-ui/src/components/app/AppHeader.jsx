@@ -1,3 +1,5 @@
+import { useScanStatus } from "../../hooks/scanStatusContext.jsx";
+
 function DeviceIcon() {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true" className="statusIconSvg">
@@ -30,6 +32,31 @@ function ScanIcon() {
   );
 }
 
+function LoadingIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="statusIconSvg">
+      <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"></path>
+    </svg>
+  );
+}
+
+function CheckIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="statusIconSvg">
+      <path d="M20 6L9 17l-5-5"></path>
+    </svg>
+  );
+}
+
+function ErrorIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="statusIconSvg">
+      <circle cx="12" cy="12" r="10"></circle>
+      <path d="M15 9l-6 6M9 9l6 6"></path>
+    </svg>
+  );
+}
+
 export default function AppHeader({
   theme,
   onToggleTheme,
@@ -40,6 +67,7 @@ export default function AppHeader({
   apiMessage = "",
   resultMessage = "",
 }) {
+  const { scanStatus } = useScanStatus();
   return (
     <header className="topbar">
       <div className="topbarLeft">
@@ -72,6 +100,20 @@ export default function AppHeader({
           >
             <span className="statusCompactText">{resultMessage}</span>
           </div>
+
+          {scanStatus !== "idle" && (
+            <div
+              className={`topbarStatusItem ${scanStatus === "completed" ? "isOk" : scanStatus === "error" ? "isError" : "isWarning"}`}
+              title={`Scan status: ${scanStatus}`}
+            >
+              <span className="statusIconWrap" aria-label={`Scan ${scanStatus}`}>
+                {scanStatus === "loading" && <LoadingIcon />}
+                {scanStatus === "completed" && <CheckIcon />}
+                {scanStatus === "error" && <ErrorIcon />}
+              </span>
+              <span className="statusCompactText">Scan</span>
+            </div>
+          )}
         </div>
       </div>
 

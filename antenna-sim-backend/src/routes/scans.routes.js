@@ -1,11 +1,13 @@
 // antenna-sim-backend/src/routes/scans.routes.js
 import { Router } from "express";
-import { saveXml } from "../controllers/scans.controller.js";
+import { saveXml, startScan, listScans } from "../controllers/scans.controller.js";
 import { OUT_DIRS, SATSCAN_OUTPUT_DIR, SATSCAN_INPUT_DIR } from "../config/env.js";
 
 const router = Router();
 
 router.post("/scans/xml", saveXml);
+router.post("/scans/start", startScan);
+router.get("/scans/list", listScans);
 
 // sanity endpoints
 router.get("/scans/outdir", (req, res) =>
