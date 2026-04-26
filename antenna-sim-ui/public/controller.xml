@@ -1,4 +1,4 @@
-;; Satscan_Controller_File_ver = '1.0'
+<!-- ;; Satscan_Controller_File_ver = '1.0' -->
 <Elements>
 	<Name>Scan_Name</Name>
 	<Val>Satscan_100</Val>
@@ -9,7 +9,7 @@
 	<Name>UseDecHWForFLDeepScan</Name>
 	<Val>1</Val>
 	<Name>IP_Address_SNMP_Device</Name>
-	<Val>192.168.15.112</Val>
+	<Val>192.168.10.200</Val>
 	<Name>IP_Address_DVBS_Receiver_Traffic</Name>
 	<Val>192.168.100.102</Val>
 	<Name>L-Band_Start_frequency</Name>
