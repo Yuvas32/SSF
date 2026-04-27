@@ -15,6 +15,8 @@ export const SATSCAN_INPUT_DIR ="C:\\Satscan\\satscandata\\input";
 
 export const SATSCAN_OUTPUT_DIR ="C:\\Satscan\\satscandata\\output";
 
+export const SATSCAN_STATUS_DIR ="C:\\Satscan\\satscandata\\status";
+
 function getDownloadsDir() {
   // Windows-friendly: USERPROFILE\Downloads
   // Fallback: HOME / os.homedir()

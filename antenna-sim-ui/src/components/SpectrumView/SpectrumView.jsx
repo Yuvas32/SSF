@@ -1,7 +1,6 @@
 import { forwardRef, useMemo, useRef, useImperativeHandle } from "react";
 import { buildPolyline } from "./spectrumMath";
 
-import SpectrumPanel from "./components/SpectrumPanel";
 import SpectrumModal from "./components/SpectrumModal";
 
 import useSpectrumDemo from "./hooks/useSpectrumDemo";
@@ -12,7 +11,7 @@ import useModalEscClose from "./hooks/useModalEscClose";
 
 import { normalizeSpectrumPoints } from "./utils/spectrumHelpers";
 
-const SpectrumView = forwardRef(({ startFreq, endFreq, lastScan, scanId, mode = "scan" }, ref) => {
+const SpectrumView = forwardRef(({ startFreq, endFreq, lastScan, scanId, mode = "scan", onClose }, ref) => {
   const isDark = document?.querySelector?.(".app")?.classList?.contains("dark");
 
   const sid = scanId;
@@ -20,6 +19,12 @@ const SpectrumView = forwardRef(({ startFreq, endFreq, lastScan, scanId, mode = 
 
   // UI modal state
   const { isOpen, open, close } = useModalEscClose();
+
+  // Wrap close to call parent's onClose handler
+  const handleModalClose = () => {
+    close();
+    onClose?.();
+  };
 
   // Demo data (only when no scan yet)
   const demo = useSpectrumDemo({ enabled: !hasScan });
@@ -55,24 +60,16 @@ const SpectrumView = forwardRef(({ startFreq, endFreq, lastScan, scanId, mode = 
 
   return (
     <>
-      <SpectrumPanel
-        startFreq={startFreq}
-        endFreq={endFreq}
-        lastScan={lastScan}
-        hasScan={hasScan}
-        isLive={Boolean(watcher.live)}
-        onOpen={open}
-      />
-
       <SpectrumModal
         isOpen={isOpen}
-        onClose={close}
+        onClose={handleModalClose}
         isDark={Boolean(isDark)}
         hasScan={hasScan}
         isLive={Boolean(watcher.live)}
         startFreq={startFreq}
         endFreq={endFreq}
         lastScan={lastScan}
+        scanId={sid}
         unitToShow={unitToShow}
         svg={svg}
         pointsToShow={pointsToShow}

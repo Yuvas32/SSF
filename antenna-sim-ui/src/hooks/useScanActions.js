@@ -37,11 +37,11 @@ export default function useScanActions({ pcHealth, cooldown, setActiveTab }) {
       setAutoSaveMsg(buildAutoSaveMessage(xmlResult));
       setSpectrumMode("scan");
       setScan(nextScan);
-      setActiveTab("spectrum");
+      setActiveTab("table");
     } catch (error) {
       console.error(error);
       setScan(buildScanErrorState({ start, stop, scanName, error }));
-      setActiveTab("spectrum");
+      setActiveTab("table");
       setAutoSaveMsg(`❌ ${error?.message || "Scan failed"}`);
     } finally {
       setIsScanning(false);
@@ -51,7 +51,7 @@ export default function useScanActions({ pcHealth, cooldown, setActiveTab }) {
   async function handleDisplayRow(row) {
     setSpectrumMode("display");
     setScan(buildDisplayedScan(row));
-    setActiveTab("spectrum");
+    setActiveTab("table");
 
     try {
       const text = await loadTmptxtByScanId(row.id);

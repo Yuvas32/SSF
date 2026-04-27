@@ -12,6 +12,7 @@ export default function App() {
   const { theme, toggleTheme } = useAppTheme();
   const { activeTab, setActiveTab } = useActiveTab();
   const spectrumViewRef = useRef(null);
+  const [previousTab, setPreviousTab] = useState(null);
 
   const pcHealth = usePcHealth(3000);
   const cooldown = useCooldown(COOLDOWN_MS);
@@ -39,12 +40,25 @@ export default function App() {
     return "ok";
   }, [pcHealth]);
 
+  const handleTabChange = (newTab) => {
+    // Save the current tab as previous before changing
+    if (newTab === "spectrum") {
+      setPreviousTab(activeTab);
+    }
+    setActiveTab(newTab);
+  };
+
   const handleSpectrumTabClick = () => {
-    setActiveTab("spectrum");
-    // Auto-open the spectrum modal
+    // Modal will be opened with a timeout to ensure the view is rendered first
     setTimeout(() => {
       spectrumViewRef.current?.openModal?.();
     }, 0);
+  };
+
+  const handleSpectrumModalClose = () => {
+    if (previousTab) {
+      setActiveTab(previousTab);
+    }
   };
 
   return (
@@ -58,6 +72,7 @@ export default function App() {
         apiOk={pcHealth.apiOk}
         apiMessage={pcHealth.apiMessage || "unknown"}
         resultMessage={resultMessage}
+        currentScanId={app.scan?.dbId}
       />
 
       <ScanControls
@@ -78,17 +93,20 @@ export default function App() {
 
           <AppTabs
             activeTab={activeTab}
-            setActiveTab={setActiveTab}
+            setActiveTab={handleTabChange}
             scanId={app.scan?.dbId}
+            onSpectrumClick={handleSpectrumTabClick}
           />
 
           {activeTab === "spectrum" && (
             <SpectrumView
+              ref={spectrumViewRef}
               startFreq={app.scan?.start ?? "-"}
               endFreq={app.scan?.stop ?? "-"}
               lastScan={app.scan?.ts ?? ""}
               scanId={app.scan?.dbId ?? null}
               mode={app.spectrumMode}
+              onClose={handleSpectrumModalClose}
             />
           )}
 

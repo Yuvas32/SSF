@@ -33,6 +33,20 @@ export const spectrumFile = asyncHandler(async (req, res) => {
   res.json(data);
 });
 
+export const spectrumExists = asyncHandler(async (req, res) => {
+  const scanId = req.params.scanId;
+  if (!scanId || scanId.trim() === '') {
+    return res.status(400).json({ ok: false, error: "scanId must be a non-empty string" });
+  }
+
+  try {
+    const status = await getOutputStatusForScanId(scanId);
+    res.json({ exists: status.spectrumFound });
+  } catch (error) {
+    res.json({ exists: false });
+  }
+});
+
 export const tmptxtFile = asyncHandler(async (req, res) => {
   const scanId = req.params.scanId;
   if (!scanId || scanId.trim() === '') {

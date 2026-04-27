@@ -29,6 +29,7 @@ export default function SpectrumModal({
   startFreq,
   endFreq,
   lastScan,
+  scanId,
 
   unitToShow,
   svg,
@@ -137,45 +138,27 @@ export default function SpectrumModal({
     >
       <div style={isDark ? modalBoxStyleDark : modalBoxStyleLight}>
         <div style={isDark ? modalHeaderStyleDark : modalHeaderStyleLight}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <div style={{ fontWeight: 900 }}>Spectrum</div>
-            <span style={badgeStyle}>{hasScan ? (isLive ? "LIVE" : "SEARCHING") : "DEMO"}</span>
+          <div style={{ flex: 1, textAlign: "center", fontWeight: 900, fontSize: 16 }}>
+            {hasScan ? `Scan_${scanId}` : "Spectrum Demo"}
           </div>
 
           <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-            <div style={{ fontSize: 12, opacity: 0.8 }}>
-              {lastScan ? `${startFreq} → ${endFreq}` : ""}
+            <div style={{ fontSize: 12, opacity: 0.8, minWidth: 100 }}>
+              {hasScan && startFreq && endFreq ? `${startFreq} → ${endFreq}` : ""}
             </div>
-            <button className="btnSmall" onClick={onClose} type="button">
-              Close
+            <button
+              className="btnSmall"
+              onClick={onClose}
+              type="button"
+              style={{ width: 32, height: 32, padding: 0, display: "flex", alignItems: "center", justifyContent: "center" }}
+              title="Close (Esc)"
+            >
+              ✕
             </button>
           </div>
         </div>
 
         <div style={modalBodyStyle}>
-          {hasScan ? (
-            <div style={metaRowStyle}>
-              <div style={{ opacity: 0.85 }}>
-                <b>Status:</b> {statusText || "Preparing…"}
-              </div>
-              <div style={{ opacity: 0.75 }}>
-                <b>Elapsed:</b> {fmtTime(elapsedSec)}
-                {waitingSecLeft > 0 ? (
-                  <>
-                    {" "}
-                    • <b>Waiting:</b> {waitingSecLeft}s
-                  </>
-                ) : null}
-              </div>
-            </div>
-          ) : (
-            <div style={metaRowStyle}>
-              <div style={{ opacity: 0.75 }}>
-                Source: <b>{demoUrl}</b>
-              </div>
-            </div>
-          )}
-
           {error ? <div style={errorBoxStyle}>{error}</div> : null}
 
           <div style={zoomBarStyle}>
@@ -196,7 +179,7 @@ export default function SpectrumModal({
               Reset
             </button>
 
-            <div style={{ fontSize: 12, opacity: 0.7, marginLeft: 10 }}>
+            <div style={{ fontSize: 13, fontWeight: 600, opacity: 0.85, marginLeft: 10, letterSpacing: "0.3px" }}>
               {boxZoom?.active
                 ? "Release to zoom into selection"
                 : isZoomed
@@ -266,12 +249,6 @@ export default function SpectrumModal({
             ) : null}
             {!hasScan && !pointsToShow?.length ? <div style={placeholderStyle}>No demo points…</div> : null}
           </div>
-
-          {live?.source ? (
-            <div style={{ fontSize: 12, opacity: 0.7, marginTop: 8 }}>
-              LIVE source: <b>{live.source}</b>
-            </div>
-          ) : null}
         </div>
       </div>
     </div>

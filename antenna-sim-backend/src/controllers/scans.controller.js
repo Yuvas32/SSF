@@ -4,7 +4,8 @@ import { saveXmlToFolder } from "../services/scans.service.js";
 import fs from "fs/promises";
 import path from "path";
 import { fileURLToPath } from "url";
-import { SATSCAN_OUTPUT_DIR } from "../config/env.js";
+import { SATSCAN_OUTPUT_DIR, SATSCAN_STATUS_DIR } from "../config/env.js";
+import { Frequency } from "../models/Frequency.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -90,6 +91,18 @@ export const startScan = asyncHandler(async (req, res) => {
   // Save to folders
   const { savedTo, failed, outDirs, fileName } = await saveXmlToFolder({ scanName: scanId, xml });
 
+  // Save frequency data to database
+  try {
+    await Frequency.create({
+      name: scanId,
+      start: parseFloat(freqStart),
+      end: parseFloat(freqEnd)
+    });
+  } catch (dbError) {
+    console.error("Failed to save frequency data:", dbError);
+    // Don't fail the scan if DB save fails, but log it
+  }
+
   res.json({
     ok: failed.length === 0,
     scanId,
@@ -110,10 +123,29 @@ export const listScans = asyncHandler(async (req, res) => {
       const scanName = entry.name.substring(5); // Remove 'Scan_'
       const folderPath = path.join(SATSCAN_OUTPUT_DIR, entry.name);
       const stat = await fs.stat(folderPath);
+
+      // Get frequency data from database
+      let frequencyData = null;
+      try {
+        const freqRecord = await Frequency.findOne({
+          where: { name: scanName }
+        });
+        if (freqRecord) {
+          frequencyData = {
+            start: freqRecord.start,
+            end: freqRecord.end
+          };
+        }
+      } catch (dbError) {
+        console.error(`Failed to get frequency data for ${scanName}:`, dbError);
+      }
+
       scans.push({
         id: scanName,
         name: scanName,
         createdAt: stat.birthtime.toISOString(),
+        start: frequencyData?.start || null,
+        end: frequencyData?.end || null,
       });
     }
   }
@@ -122,4 +154,53 @@ export const listScans = asyncHandler(async (req, res) => {
   scans.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
   res.json(scans);
+});
+
+export const getProgress = asyncHandler(async (req, res) => {
+  try {
+    const progressFilePath = path.join(SATSCAN_STATUS_DIR, "progress.txt");
+    
+    // Check if progress file exists
+    try {
+      await fs.access(progressFilePath);
+    } catch {
+      return res.json({ percentage: 0, status: "idle" });
+    }
+
+    const content = await fs.readFile(progressFilePath, "utf8");
+    const lines = content.trim().split('\n').filter(line => line.trim());
+    
+    if (lines.length === 0) {
+      return res.json({ percentage: 0, status: "idle" });
+    }
+
+    // Get the last line (most recent progress)
+    const lastLine = lines[lines.length - 1].trim();
+    
+    // Check if it contains "end" - if so, it's completed
+    if (lastLine.toLowerCase().includes("end")) {
+      return res.json({ percentage: 100, status: "completed" });
+    }
+
+    // Parse two numbers from the line
+    const numbers = lastLine.match(/\d+/g);
+    if (!numbers || numbers.length < 2) {
+      return res.json({ percentage: 0, status: "loading" });
+    }
+
+    const num1 = parseFloat(numbers[0]);
+    const num2 = parseFloat(numbers[1]);
+    
+    if (isNaN(num1) || isNaN(num2) || num2 === 0) {
+      return res.json({ percentage: 0, status: "loading" });
+    }
+
+    // Calculate percentage (assuming num1 is current, num2 is total)
+    const percentage = Math.min(100, Math.max(0, Math.round((num1 / num2) * 100)));
+    
+    res.json({ percentage, status: "loading" });
+  } catch (error) {
+    console.error("Error reading progress file:", error);
+    res.json({ percentage: 0, status: "error" });
+  }
 });
