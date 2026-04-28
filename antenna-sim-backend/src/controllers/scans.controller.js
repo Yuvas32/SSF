@@ -273,7 +273,15 @@ export const getProgress = asyncHandler(async (req, res) => {
     const current = parseFloat(match[1]);
     const total = parseFloat(match[2]);
     
-    if (isNaN(current) || isNaN(total) || total === 0) {
+    if (isNaN(current) || isNaN(total)) {
+      return res.json({ percentage: 0, status: "loading" });
+    }
+
+    if (current === 0 && total === 0) {
+      return res.json({ percentage: 100, status: "completed" });
+    }
+
+    if (total === 0) {
       return res.json({ percentage: 0, status: "loading" });
     }
 

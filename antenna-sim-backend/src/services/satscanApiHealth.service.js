@@ -87,7 +87,7 @@ export function startCerberusService() {
 
 export function launchSatscanApi() {
   return new Promise((resolve, reject) => {
-    const exePath = `C:\Satscan\${SATSCAN_API_EXE}`;
+    const exePath = `C:\\Satscan\\${SATSCAN_API_EXE}`;
     const cmd = `start "" "${exePath}"`;
 
     exec(cmd, { windowsHide: true, maxBuffer: 2 * 1024 * 1024 }, (err, stdout, stderr) => {

@@ -5,7 +5,7 @@ import TableView from "../TableView/TableView";
 export default function ScanTablePanel({ scanId, tableText, onClear }) {
   const [carriersProgress, setCarriersProgress] = useState(0);
   const [apiOk, setApiOk] = useState(false);
-  const [cerberusOk, setCerberusOk] = useState(true);
+  const [cerberusOk, setCerberusOk] = useState(false);
 
   useEffect(() => {
     let alive = true;
@@ -79,6 +79,17 @@ export default function ScanTablePanel({ scanId, tableText, onClear }) {
     }
   }
 
+  async function handleOpenApi() {
+    try {
+      await fetch(`${API_BASE}/health/satscan-api/launch`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+    } catch (err) {
+      console.error("Open API launch failed", err);
+    }
+  }
+
   return (
     <div className="panel">
       <div className="panelHeader">
@@ -90,9 +101,9 @@ export default function ScanTablePanel({ scanId, tableText, onClear }) {
         </div>
 
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-          {/* <button className="btnSmall" onClick={handleOpenApi}>
+          <button className="btnSmall" onClick={handleOpenApi}>
             Open API
-          </button> */}
+          </button>
           <button className="btnSmall" onClick={handleOpenSatprobe}>
             Open Satprobe
           </button>
