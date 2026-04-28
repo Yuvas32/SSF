@@ -12,6 +12,7 @@ export const DEFAULT_ACTIVE = [
   "signal level",
   "crc ok",
   "nr uws",
+  "uw type",
   "FECtype",
   "Inverted",
   "Blocksize",

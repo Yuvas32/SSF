@@ -1,29 +1,29 @@
-import { useState } from "react";
-
 export default function TableGrid({
   hasData,
   visibleHeaders,
   rows,
   colIndexByHeader,
+  selectedRows = new Set(),
+  onSelectedRowsChange,
   maxHeight = 520,
 }) {
-  const [selectedRows, setSelectedRows] = useState(new Set());
+  const currentSelection = selectedRows instanceof Set ? selectedRows : new Set(selectedRows);
 
   function toggleRowSelection(rowIdx) {
-    const newSet = new Set(selectedRows);
+    const newSet = new Set(currentSelection);
     if (newSet.has(rowIdx)) {
       newSet.delete(rowIdx);
     } else {
       newSet.add(rowIdx);
     }
-    setSelectedRows(newSet);
+    onSelectedRowsChange?.(newSet);
   }
 
   function toggleAllRows() {
-    if (selectedRows.size === rows.length) {
-      setSelectedRows(new Set());
+    if (currentSelection.size === rows.length) {
+      onSelectedRowsChange?.(new Set());
     } else {
-      setSelectedRows(new Set(rows.map((_, idx) => idx)));
+      onSelectedRowsChange?.(new Set(rows.map((_, idx) => idx)));
     }
   }
 
@@ -58,7 +58,7 @@ export default function TableGrid({
             >
               <input
                 type="checkbox"
-                checked={selectedRows.size === rows.length && rows.length > 0}
+                checked={currentSelection.size === rows.length && rows.length > 0}
                 onChange={toggleAllRows}
                 title="Select all rows"
                 style={{ cursor: "pointer" }}
@@ -102,7 +102,7 @@ export default function TableGrid({
               key={rowIdx}
               style={{
                 borderBottom: "1px solid rgba(255,255,255,0.06)",
-                backgroundColor: selectedRows.has(rowIdx) ? "rgba(59,130,246,0.1)" : "transparent",
+                backgroundColor: currentSelection.has(rowIdx) ? "rgba(59,130,246,0.1)" : "transparent",
               }}
             >
               <td
@@ -115,7 +115,7 @@ export default function TableGrid({
               >
                 <input
                   type="checkbox"
-                  checked={selectedRows.has(rowIdx)}
+                  checked={currentSelection.has(rowIdx)}
                   onChange={() => toggleRowSelection(rowIdx)}
                   title={`Select row ${rowIdx + 1}`}
                   style={{ cursor: "pointer" }}

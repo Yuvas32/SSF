@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import ConvertToXmlButton from "../ConvertToXmlButton";
 import { DEFAULT_ACTIVE } from "./constants";
 import { parseTextToTable } from "./utils/parseTextToTable";
@@ -19,6 +19,7 @@ export default function TableView({ title = "Table", text = "", maxHeight = 520,
   }, [allHeaders]);
 
   const table = useTableColumns(allHeaders, defaultSelected);
+  const [selectedRowIndexes, setSelectedRowIndexes] = useState(() => new Set());
   const hasData = Boolean(allHeaders.length) && Boolean(rows.length);
 
   return (
@@ -35,7 +36,12 @@ export default function TableView({ title = "Table", text = "", maxHeight = 520,
         showAll={table.showAll}
         hideAll={table.hideAll}
       >
-        <ConvertToXmlButton headers={allHeaders} rows={rows} scanId={scanId} />
+        <ConvertToXmlButton
+          headers={allHeaders}
+          rows={rows}
+          scanId={scanId}
+          selectedRows={selectedRowIndexes}
+        />
       </TableToolbar>
 
       <TableColumnsPanel
@@ -55,6 +61,8 @@ export default function TableView({ title = "Table", text = "", maxHeight = 520,
         visibleHeaders={table.visibleHeaders}
         rows={rows}
         colIndexByHeader={table.colIndexByHeader}
+        selectedRows={selectedRowIndexes}
+        onSelectedRowsChange={setSelectedRowIndexes}
         maxHeight={maxHeight}
       />
     </div>

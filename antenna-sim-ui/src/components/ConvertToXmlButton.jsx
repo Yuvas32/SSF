@@ -19,14 +19,17 @@ const DEFAULTS = {
   GoldCode: "0",
 };
 
-export default function ConvertToXmlButton({ headers = [], rows = [], scanId = null }) {
+export default function ConvertToXmlButton({ headers = [], rows = [], scanId = null, selectedRows = new Set() }) {
   const canConvert = Array.isArray(headers) && headers.length > 0 && Array.isArray(rows) && rows.length > 0;
+  const effectiveRows = selectedRows && selectedRows.size > 0
+    ? rows.filter((_, idx) => selectedRows.has(idx))
+    : rows;
 
   function onConvert() {
     if (!canConvert) return;
 
     try {
-      const xml = buildXmlFromTable(headers, rows);
+      const xml = buildXmlFromTable(headers, effectiveRows);
       const filename = Number.isFinite(Number(scanId)) && Number(scanId) > 0
         ? `Scan_${scanId}_converted.xml`
         : "converted_carriers.xml";
@@ -79,10 +82,17 @@ function mapRowToCarrier(headers, row, idx) {
   const modulation = getVal(obj, "modulation");
   const signalRes = getVal(obj, "signal level");
   const crcOk = getVal(obj, "crc ok");
-  const nrUws = getVal(obj, "nr uws");
+  const nrUws = getVal(obj, "nr uws") || getVal(obj, "uw type") || getVal(obj, "frame format");
   const fecType = getVal(obj, "fectype");
   const inverted = getVal(obj, "inverted");
   const blocksize = getVal(obj, "blocksize");
+
+  const systemValue = normalizeCell(system);
+  const lowerSystem = systemValue.toLowerCase();
+  // Replace Evolution, Velocity, or any combination (e.g., "Evolution or Velocity") with "Evolution RL"
+  const systemXml = lowerSystem.includes("evolution") || lowerSystem.includes("velocity")
+    ? "Evolution RL"
+    : systemValue;
 
   const comment = fecType ? `, (SW-tuner)FEC = ${fecType}` : "";
 
@@ -91,7 +101,7 @@ function mapRowToCarrier(headers, row, idx) {
     Symbolrate: normalizeCell(symbolrate),
     BW: normalizeCell(bw),
     Code_Rate: normalizeCell(codeRate),
-    System: normalizeCell(system),
+    System: normalizeCell(systemXml),
     Vendor_System: normalizeCell(vendorSystem),
     Es_no: normalizeCell(esNo),
     Modulation: normalizeCell(modulation),
@@ -100,7 +110,7 @@ function mapRowToCarrier(headers, row, idx) {
     Burst: DEFAULTS.Burst,
     IF_Freqency: DEFAULTS.IF_Freqency,
     Inverted_Spectrum: normalizeYesNo(inverted),
-    UW_type: normalizeCell(nrUws),
+    Frame_Format: normalizeCell(nrUws),
     RollOff: DEFAULTS.RollOff,
     FECtype: normalizeCell(fecType),
     SISMIS: DEFAULTS.SISMIS,
@@ -139,7 +149,7 @@ function buildCarrierXml(carrier) {
     "Burst",
     "IF_Freqency",
     "Inverted_Spectrum",
-    "UW_type",
+    "Frame_Format",
     "RollOff",
     "FECtype",
     "SISMIS",

@@ -112,6 +112,7 @@ export default function AppHeader({
   const { scanStatus } = useScanStatus();
   const [spectrumExists, setSpectrumExists] = useState(false);
   const [carriersProgress, setCarriersProgress] = useState(0);
+  const [cerberusOk, setCerberusOk] = useState(false);
 
   // Check spectrum existence when scan changes
   React.useEffect(() => {
@@ -138,12 +139,18 @@ export default function AppHeader({
   React.useEffect(() => {
     const interval = setInterval(async () => {
       try {
-        const res = await fetch(`${API_BASE}/scans/progress`);
-        const data = await res.json();
-        setCarriersProgress(data.percentage || 0);
+        const [progressRes, cerberusRes] = await Promise.all([
+          fetch(`${API_BASE}/scans/progress`),
+          fetch(`${API_BASE}/health/cerberus`),
+        ]);
+        const progressData = await progressRes.json();
+        const cerberusData = await cerberusRes.json();
+        setCarriersProgress(progressData.percentage || 0);
+        setCerberusOk(Boolean(cerberusData.ok));
       } catch (e) {
-        console.error("Carriers progress fetch error:", e);
+        console.error("Progress/Cerberus fetch error:", e);
         setCarriersProgress(0);
+        setCerberusOk(false);
       }
     }, 5000); // 5 seconds
 
@@ -174,6 +181,16 @@ export default function AppHeader({
               <SatelliteIcon />
             </span>
             <span className="statusCompactText">{apiMessage}</span>
+          </div>
+
+          <div
+            className={`topbarStatusItem ${cerberusOk ? "isOk" : "isError"}`}
+            title="Cerberus Service"
+          >
+            <span className="statusIconWrap" aria-label="Cerberus Service">
+              {cerberusOk ? <CheckIcon /> : <ErrorIcon />}
+            </span>
+            <span className="statusCompactText">Cerberus</span>
           </div>
 
           <div
