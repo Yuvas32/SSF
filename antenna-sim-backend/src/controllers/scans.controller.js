@@ -225,49 +225,67 @@ export const deleteScan = asyncHandler(async (req, res) => {
 
 export const getProgress = asyncHandler(async (req, res) => {
   try {
-    const progressFilePath = path.join(SATSCAN_STATUS_DIR, "progress.txt");
+    // Look for progress files matching the pattern "progress_*_of_*_end"
+    const statusDir = SATSCAN_STATUS_DIR;
     
-    // Check if progress file exists
     try {
-      await fs.access(progressFilePath);
+      await fs.access(statusDir);
     } catch {
       return res.json({ percentage: 0, status: "idle" });
     }
 
-    const content = await fs.readFile(progressFilePath, "utf8");
-    const lines = content.trim().split('\n').filter(line => line.trim());
+    // Read all files in the status directory
+    const files = await fs.readdir(statusDir);
     
-    if (lines.length === 0) {
+    // Find files matching the progress pattern
+    const progressFiles = files.filter(file => {
+      const match = file.match(/^progress_(\d+)_of_(\d+)_end\.txt$/);
+      return match !== null;
+    });
+
+    if (progressFiles.length === 0) {
       return res.json({ percentage: 0, status: "idle" });
     }
 
-    // Get the last line (most recent progress)
-    const lastLine = lines[lines.length - 1].trim();
+    // Get the most recent progress file (by modification time)
+    let latestFile = null;
+    let latestTime = 0;
     
-    // Check if it contains "end" - if so, it's completed
-    if (lastLine.toLowerCase().includes("end")) {
-      return res.json({ percentage: 100, status: "completed" });
+    for (const file of progressFiles) {
+      const filePath = path.join(statusDir, file);
+      const stats = await fs.stat(filePath);
+      if (stats.mtime.getTime() > latestTime) {
+        latestTime = stats.mtime.getTime();
+        latestFile = file;
+      }
     }
 
-    // Parse two numbers from the line
-    const numbers = lastLine.match(/\d+/g);
-    if (!numbers || numbers.length < 2) {
+    if (!latestFile) {
+      return res.json({ percentage: 0, status: "idle" });
+    }
+
+    // Parse the numbers from the filename
+    const match = latestFile.match(/^progress_(\d+)_of_(\d+)_end\.txt$/);
+    if (!match) {
+      return res.json({ percentage: 0, status: "idle" });
+    }
+
+    const current = parseFloat(match[1]);
+    const total = parseFloat(match[2]);
+    
+    if (isNaN(current) || isNaN(total) || total === 0) {
       return res.json({ percentage: 0, status: "loading" });
     }
 
-    const num1 = parseFloat(numbers[0]);
-    const num2 = parseFloat(numbers[1]);
+    // Calculate percentage
+    const percentage = Math.min(100, Math.max(0, Math.round((current / total) * 100)));
     
-    if (isNaN(num1) || isNaN(num2) || num2 === 0) {
-      return res.json({ percentage: 0, status: "loading" });
-    }
-
-    // Calculate percentage (assuming num1 is current, num2 is total)
-    const percentage = Math.min(100, Math.max(0, Math.round((num1 / num2) * 100)));
+    // If current equals total, it's completed
+    const status = current >= total ? "completed" : "loading";
     
-    res.json({ percentage, status: "loading" });
+    res.json({ percentage, status });
   } catch (error) {
-    console.error("Error reading progress file:", error);
+    console.error("Error reading progress files:", error);
     res.json({ percentage: 0, status: "error" });
   }
 });

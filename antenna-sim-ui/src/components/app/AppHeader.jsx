@@ -110,8 +110,8 @@ export default function AppHeader({
   currentScanId = null,
 }) {
   const { scanStatus } = useScanStatus();
-  const [progress, setProgress] = useState(0);
   const [spectrumExists, setSpectrumExists] = useState(false);
+  const [carriersProgress, setCarriersProgress] = useState(0);
 
   // Check spectrum existence when scan changes
   React.useEffect(() => {
@@ -134,25 +134,21 @@ export default function AppHeader({
     checkSpectrum();
   }, [currentScanId]);
 
-  // Fetch progress when scan is loading
+  // Poll carriers progress every 5 seconds
   React.useEffect(() => {
-    if (scanStatus !== "loading") return;
-
     const interval = setInterval(async () => {
       try {
         const res = await fetch(`${API_BASE}/scans/progress`);
         const data = await res.json();
-        setProgress(data.percentage || 0);
+        setCarriersProgress(data.percentage || 0);
       } catch (e) {
-        console.error("Progress fetch error:", e);
+        console.error("Carriers progress fetch error:", e);
+        setCarriersProgress(0);
       }
-    }, 5000); // 5 seconds as requested
+    }, 5000); // 5 seconds
 
     return () => clearInterval(interval);
-  }, [scanStatus]);
-
-  // Determine display progress: 100% if spectrum exists, actual progress if loading
-  const displayProgress = spectrumExists ? 100 : (scanStatus === "loading" ? progress : 0);
+  }, []);
 
   return (
     <header className="topbar">
@@ -203,16 +199,19 @@ export default function AppHeader({
               {scanStatus === "idle" && !spectrumExists && <ScanIcon />}
             </span>
             <span className="statusCompactText">Spectrum Existence</span>
-            
-            {(scanStatus === "loading" || spectrumExists) && (
-              <div style={{ display: "flex", alignItems: "center", gap: 4, marginLeft: 4 }}>
-                <div style={{ width: 24, height: 24, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <BatteryIcon percentage={displayProgress} />
-                </div>
-              </div>
-            )}
           </div>
         )}
+
+        <div
+          className="topbarStatusItem"
+          title="Carriers Progress"
+          style={{ display: "flex", alignItems: "center", gap: 4, marginRight: 8 }}
+        >
+          <span className="statusCompactText">Carriers Progress</span>
+          <div style={{ width: 24, height: 24, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <BatteryIcon percentage={carriersProgress} />
+          </div>
+        </div>
 
         <button
           className="openScanBtn"
