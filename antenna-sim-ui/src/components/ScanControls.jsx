@@ -108,11 +108,11 @@ export default function ScanControls({
             </label>
 
             <label className="field">
-              <span className="fieldLabel">Start frequency</span>
+              <span className="fieldLabel">Start frequency (MHz)</span>
               <input
                 className="input"
                 type="number"
-                placeholder="e.g. 10700"
+                placeholder="e.g. 1220"
                 value={startFreq}
                 onChange={(e) => setStartFreq(e.target.value)}
                 disabled={isScanning}
@@ -120,11 +120,11 @@ export default function ScanControls({
             </label>
 
             <label className="field">
-              <span className="fieldLabel">Stop frequency</span>
+              <span className="fieldLabel">Stop frequency (MHz)</span>
               <input
                 className="input"
                 type="number"
-                placeholder="e.g. 12750"
+                placeholder="e.g. 1275"
                 value={stopFreq}
                 onChange={(e) => setStopFreq(e.target.value)}
                 disabled={isScanning}

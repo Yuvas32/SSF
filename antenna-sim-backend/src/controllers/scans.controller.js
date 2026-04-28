@@ -131,9 +131,11 @@ export const listScans = asyncHandler(async (req, res) => {
           where: { name: scanName }
         });
         if (freqRecord) {
+          const startValue = Number(freqRecord.start);
+          const endValue = Number(freqRecord.end);
           frequencyData = {
-            start: freqRecord.start,
-            end: freqRecord.end
+            start: Math.abs(startValue) > 10_000_000 ? startValue / 1000000 : startValue,
+            end: Math.abs(endValue) > 10_000_000 ? endValue / 1000000 : endValue,
           };
         }
       } catch (dbError) {
@@ -154,6 +156,71 @@ export const listScans = asyncHandler(async (req, res) => {
   scans.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
   res.json(scans);
+});
+
+export const updateScan = asyncHandler(async (req, res) => {
+  const scanName = (req.params.scanName || "").trim();
+  const newName = (req.body?.name || "").trim();
+
+  if (!scanName) {
+    return res.status(400).json({ ok: false, error: "scanName parameter is required" });
+  }
+  if (!newName) {
+    return res.status(400).json({ ok: false, error: "New scan name is required" });
+  }
+  if (scanName === newName) {
+    return res.json({ ok: true, scanName });
+  }
+
+  const oldFolder = path.join(SATSCAN_OUTPUT_DIR, `Scan_${scanName}`);
+  const newFolder = path.join(SATSCAN_OUTPUT_DIR, `Scan_${newName}`);
+
+  try {
+    await fs.access(oldFolder);
+  } catch {
+    return res.status(404).json({ ok: false, error: `Scan '${scanName}' not found` });
+  }
+
+  try {
+    await fs.access(newFolder);
+    return res.status(409).json({ ok: false, error: `Scan '${newName}' already exists` });
+  } catch {
+    // expected
+  }
+
+  await fs.rename(oldFolder, newFolder);
+
+  try {
+    await Frequency.update({ name: newName }, { where: { name: scanName } });
+  } catch (dbError) {
+    console.error(`Failed to update scan name in database from ${scanName} to ${newName}:`, dbError);
+  }
+
+  res.json({ ok: true, scanName: newName });
+});
+
+export const deleteScan = asyncHandler(async (req, res) => {
+  const scanName = (req.params.scanName || "").trim();
+  if (!scanName) {
+    return res.status(400).json({ ok: false, error: "scanName parameter is required" });
+  }
+
+  const folderPath = path.join(SATSCAN_OUTPUT_DIR, `Scan_${scanName}`);
+  try {
+    await fs.access(folderPath);
+  } catch {
+    return res.status(404).json({ ok: false, error: `Scan '${scanName}' not found` });
+  }
+
+  try {
+    await Frequency.destroy({ where: { name: scanName } });
+  } catch (dbError) {
+    console.error(`Failed to delete frequency record for ${scanName}:`, dbError);
+  }
+
+  await fs.rm(folderPath, { recursive: true, force: true });
+
+  res.json({ ok: true });
 });
 
 export const getProgress = asyncHandler(async (req, res) => {
